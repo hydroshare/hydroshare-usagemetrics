@@ -22,7 +22,7 @@ java8() {
     prepare
     wget --no-cookies --no-check-certificate --header "Cookie: gpw_e24=http%3A%2F%2Fwww.oracle.com%2F; oraclelicense=accept-securebackup-cookie" "http://download.oracle.com/otn-pub/java/jdk/8u73-b02/jdk-8u73-linux-x64.rpm"
     sudo yum -y localinstall jdk-8u73-linux-x64.rpm
-    rm ~/jdk-8u*-linux-x64.rpm
+    rm ./*.rpm
 }
 
 elasticsearch() {
@@ -110,7 +110,7 @@ nginx() {
 
   printf -- "--> installing nginx from epel-release\n"
   sudo yum install -y epel-release  
-  sudo yum install nginx  
+  sudo yum install -y nginx  
 
   printf -- "--> moving nginx configuration files\n"
   NGINX_CONFIG="/etc/nginx/conf.d"
@@ -164,7 +164,7 @@ logstash() {
 
 firewall() {
 
-  printf "\nConfiguring Firewalli\n"
+  printf "\nConfiguring Firewall\n"
   sudo firewall-cmd --zone=public --add-port=5044/tcp --permanent
   sudo firewall-cmd --reload
 
