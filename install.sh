@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+
+# see for more info: http://www.tecmint.com/install-elasticsearch-logstash-and-kibana-elk-stack-on-centos-rhel-7/
+
 set -eu
 set -o pipefail
 sudo ls > /dev/null # get sudo rights before user walks away
@@ -9,32 +12,35 @@ USAGE="Usage: $0 [elasticsearch, kibana, nginx, logstash]\nNo arguments defaults
 
 
 prepare() {
-
-  wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
-  sudo apt-get install apt-transport-https
-  if ! fgrep artifacts /etc/apt/sources.list.d/elastic-5.x.list; then
-    echo "deb https://artifacts.elastic.co/packages/5.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elastic-5.x.list
-  fi
-  sudo apt-get update
+  sudo yum update -y  
+  sudo yum install wget -y
 }
 
 java8() {
   
     printf "\nInstalling Java Development Kit 8\n"
-    
+    prepare
     wget --no-cookies --no-check-certificate --header "Cookie: gpw_e24=http%3A%2F%2Fwww.oracle.com%2F; oraclelicense=accept-securebackup-cookie" "http://download.oracle.com/otn-pub/java/jdk/8u73-b02/jdk-8u73-linux-x64.rpm"
-    
     sudo yum -y localinstall jdk-8u73-linux-x64.rpm
-    
     rm ~/jdk-8u*-linux-x64.rpm
 }
 
 elasticsearch() {
   printf "\nInstalling Elasticsearch \n"
+  prepare
   
-  rpm --import http://packages.elastic.co/GPG-KEY-elasticsearch
-
-  ELASTIC="./elasticsearch.repo"
+  if [[ $(java -version 2>&1) == *"1.8."* ]]; then 
+    printf -- '--> JDK 8 is already installed\n'; 
+  else 
+    printf -- '--> Installing JDK 8\n'; 
+    java8;
+  fi
+  
+  sudo rpm --import http://packages.elastic.co/GPG-KEY-elasticsearch
+  
+  ELASTIC="elasticsearch.repo"
+  ELASTIC_CONFIG="/etc/elasticsearch"
+  ELASTIC_DEST="/etc/yum.repos.d/elasticsearch.repo"
   if [ ! -f /etc/yum.repos.d/elasticsearch.repo ]; then
      echo "[elasticsearch-5x]" >> $ELASTIC 
      echo "name=Elasticsearch repository for 5.x packages" >> $ELASTIC
@@ -44,133 +50,126 @@ elasticsearch() {
      echo "enabled=1" >> $ELASTIC
      echo "autorefresh=1" >> $ELASTIC
      echo "type=rpm-md" >> $ELASTIC
+
+     sudo mv $ELASTIC $ELASTIC_DEST
   fi
 
-  sudo yum install elasticsearch
-  chkconfig --add elasticsearch
-  sudo service elasticsearch start
+  printf -- "--> installing elasticsearch from packages.elastic.co\n"  
+  sudo yum install -y elasticsearch
+  sudo chkconfig --add elasticsearch
 
-}
+  printf -- "--> moving elasticsearch configutation files\n"
+  sudo cp -r configs/elasticsearch/elasticsearch.yml $ELASTIC_CONFIG
+  sudo cp -r configs/elasticsearch/logging.yml $ELASTIC_CONFIG
 
-kibana() {
-  printf "\nInstalling Kibana\n"
-  prepare
-  sudo apt-get install kibana
-  sudo update-rc.d kibana defaults 96 9
+  printf -- "--> starting the elasticsearch server\n" 
+  sudo systemctl start elasticsearch
 
-  printf -- "--> Copying configuration files\n" 
-  KIBANA_CONFIG="kibana.yml"
-  KIBANA_CONFIG_PATH="/opt/kibana/config/$KIBANA_CONFIG"
-  sudo cp "$CONFIGS_DIR/kibana/$KIBANA_CONFIG" $KIBANA_CONFIG_PATH
+  IP=$(ip addr | grep 'state UP' -A2 | tail -n1 | awk '{print $2}' | cut -f1  -d'/')
+  printf -- "--> elasticsearch installation complete.\n\nTest the server by issuing the following command:\n   curl -i $IP:9200\n"
 
-  sudo service kibana restart
 }
 
 kibana5() {
   printf "\nInstalling Kibana v5\n"
   prepare
-  sudo apt-get install kibana
-  sudo update-rc.d kibana defaults 96 9
+  
+  KIBANA="kibana.repo"
+  KIBANA_CONFIG="/etc/kibana"
+  KIBANA_DEST="/etc/yum.repos.d/kibana.repo"
+  if [ ! -f /etc/yum.repos.d/kibana.repo ]; then
+     echo "[kibana]" >> $KIBANA 
+     echo "name=Kibana repository" >> $KIBANA
+     echo "baseurl=http://packages.elastic.co/kibana/4.4/centos" >> $KIBANA
+     echo "gpgcheck=1" >> $KIBANA
+     echo "gpgkey=http://packages.elastic.co/GPG-KEY-elasticsearch" >> $KIBANA
+     echo "enabled=1" >> $KIBANA
 
-  printf -- "--> Copying configuration files\n" 
-  KIBANA_CONFIG="kibana.yml"
-  KIBANA_CONFIG_PATH="/etc/kibana/$KIBANA_CONFIG"
-  sudo cp "$CONFIGS_DIR/kibana/$KIBANA_CONFIG" $KIBANA_CONFIG_PATH
+     sudo mv $KIBANA $KIBANA_DEST
+  fi
 
-  sudo service kibana restart
+  printf -- "--> installing kibana from packages.elastic.co"
+  sudo yum install -y kibana
+
+  printf -- "--> moving kibana configutation files\n"
+  sudo cp -r configs/kibana/kibana.yml $KIBANA_CONFIG
+  
+  printf -- "--> starting kibana\n" 
+  sudo systemctl daemon-reload
+  sudo systemctl start kibana
+  sudo systemctl enable kibana
+
+  IP=$(ip addr | grep 'state UP' -A2 | tail -n1 | awk '{print $2}' | cut -f1  -d'/')
+  printf -- "--> kibana installation complete.\n\nTest the server by issuing the following command:\n   curl -i $IP:5601\n"
 }
+
 nginx() {
   printf "\nInstalling Nginx\n" 
-  sudo apt-get install -y nginx apache2-utils
 
-  printf -- "--> Copying configuration files\n" 
-  NGINX_DEFAULT_SITE_CONFIG="nginx_default"
-  NGINX_DEFAULT_SITE_DEST="/etc/nginx/sites-available/default"
-  sudo cp "$CONFIGS_DIR/nginx/$NGINX_DEFAULT_SITE_CONFIG" $NGINX_DEFAULT_SITE_DEST 
-  
-  printf -- "--> Creating administrator account for user: cuahsi\n"
-  sudo htpasswd -c /etc/nginx/htpasswd.users cuahsi 
-  sudo nginx -s reload
+  prepare
+
+  printf -- "--> installing nginx from epel-release\n"
+  sudo yum install -y epel-release  
+  sudo yum install nginx  
+
+  printf -- "--> moving nginx configuration files\n"
+  NGINX_CONFIG="/etc/nginx/conf.d"
+  NGINX="/etc/nginx"
+  sudo cp -r configs/nginx/kibana.conf $NGINX_CONFIG
+  sudo cp -r configs/nginx/es.conf $NGINX_CONFIG
+  sudo cp -r configs/nginx/nginx.conf $NGINX
+
+  sudo systemctl start nginx
+  sudo systemctl enable nginx
+
+  IP=$(ip addr | grep 'state UP' -A2 | tail -n1 | awk '{print $2}' | cut -f1  -d'/')
+  printf -- "--> nginx installation complete.\n\nTest the server by issuing the following commands:\n   curl -i $IP:80\n   curl -i $IP:8080\n"
+
+#  printf -- "--> Creating administrator account for user: cuahsi\n"
+#  sudo htpasswd -c /etc/nginx/htpasswd.users cuahsi 
+#  sudo nginx -s reload
 }
 
 logstash() {
   printf "\nInstalling Logstash\n"
-  
- wget -qO - https://packages.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
-  if ! fgrep logstash /etc/apt/sources.list; then
-    echo "deb http://packages.elastic.co/logstash/2.2/debian stable main" | sudo tee -a /etc/apt/sources.list
+
+  LOGSTASH="logstash.repo"
+  LOGSTASH_CONFIG="/etc/logstash/conf.d"
+  LOGSTASH_DEST="/etc/yum.repos.d/logstash.repo"
+  if [ ! -f /etc/yum.repos.d/logstash.repo ]; then
+     echo "[logstash]" >> $LOGSTASH
+     echo "name=Logstash" >> $LOGSTASH
+     echo "baseurl=http://packages.elasticsearch.org/logstash/2.2/centos" >> $LOGSTASH
+     echo "gpgcheck=1" >> $LOGSTASH
+     echo "gpgkey=http://packages.elasticsearch.org/GPG-KEY-elasticsearch" >> $LOGSTASH
+     echo "enabled=1" >> $LOGSTASH
+
+     sudo mv $LOGSTASH $LOGSTASH_DEST
   fi
-  sudo apt-get update && sudo apt-get install logstash=1:2.2.4-1
-  
-  printf -- "--> Copying configuration files\n" 
-  LOGSTASH_CONFD_PATH="/etc/logstash/conf.d"
-  sudo cp $CONFIGS_DIR/conf.d/*.conf $LOGSTASH_CONFD_PATH
-  
-  
-  printf -- "--> Copying jdbc driver library\n"
-  if [ ! -d /etc/logstash/java ]; then    
-    sudo mkdir /etc/logstash/java;
-  fi
-  sudo cp -r sqljdbc_4.0 /etc/logstash/java/
- 
-  printf -- "--> Installing Logstash plugins\n"
-  LOGSTASH_PLUGIN=/opt/logstash/bin/plugin
-  PRUNE_FILTER=logstash-filter-prune
-  if ! $LOGSTASH_PLUGIN list $PRUNE_FILTER; then
-    sudo -u logstash $LOGSTASH_PLUGIN install $PRUNE_FILTER
-  fi
-  if ! $LOGSTASH_PLUGIN list "logstash-filter-cuahsi-service-name"; then
-    sudo -u logstash $LOGSTASH_PLUGIN install "logstash-plugins/logstash-filter-cuahsi-service-name-2.1.0.gem"
-  fi
+
+  printf -- "--> installing elasticsearch 2.2 from packages.elasticsearch.org\n"
+  sudo yum install -y logstash  
+
+  printf -- "--> moving logstash configuration files\n"
+  sudo cp -r configs/logstash/*.conf $LOGSTASH_CONFIG 
+
+#  printf -- "--> testing the logstash configuration\n"
+#  sudo /usr/share/logstash/bin/logstash --configtest -f $LOGSTASH_CONFIG 
+
+  printf -- "--> starting the logstash service\n"
+  sudo systemctl daemon-reload
+  sudo systemctl start logstash
+  sudo systemctl enable logstash
 }
 
-filebeat() {
-  printf "\nInstalling Filebeat\n"  
-  prepare
-  
-  sudo apt-get install filebeat 
+firewall() {
 
-  printf -- "--> Making folder for archived his-webclient logs\n"
-  if [ ! -d /var/log/his-webclient ]; then 
-    sudo mkdir /var/log/his-webclient
-  fi
+  printf "\nConfiguring Firewalli\n"
+  sudo firewall-cmd --zone=public --add-port=5044/tcp --permanent
+  sudo firewall-cmd --reload
 
-  printf -- "--> Extracting his-webclient archive\n"
-  sudo tar -xvf ./archive/his-webclient/logs.tar -C /var/log/his-webclient
- 
-  printf -- "--> Moving filebeat configutation into /etc/filebeat\n" 
-  FILEBEAT_CONF_PATH="/etc/filebeat/filebeat.yml"  
-  sudo cp $CONFIGS_DIR/filebeat/*.yml $FILEBEAT_CONF_PATH  
-
-}
-
-wait_for_spinup() {
-  secs=${2}
-  name=${1}
-  while [ $secs -gt 0 ]; do
-     echo -ne "$secs\033[0K... spinning up $name\r"
-     sleep 1
-     : $((secs--))
-  done
-  printf "0\n"
-}
-
-start_server() {
- 
-  sudo service nginx start
-  wait_for_spinup nginx 10 
-  
-  sudo service elasticsearch start
-  wait_for_spinup elasticsearch 10 
-
-  sudo service logstash start
-  wait_for_spinup logstash 10 
-
-  sudo service kibana start  
-  wait_for_spinup kibana 10
-  
-  sudo service filebeat start
-  wait_for_spinup filebeat 10  
+  printf -- "--> opened ports\n"
+  sudo firewall-cmd --zone=public --list-ports
 }
 
 # Main
@@ -183,11 +182,12 @@ else
   kibana5
   nginx
   logstash
-  filebeat
-  start_server
+  firewall
+
+  IP=$(ip addr | grep 'state UP' -A2 | tail -n1 | awk '{print $2}' | cut -f1  -d'/')
 
   printf -- "--> ELK installation complete\n"
   printf -- "--> To watch ES indices build, issue the following command: \n"
-  printf -- "--> watch curl -XGET http://localhost:9200/_cat/indices?v" 
+  printf -- "    $ watch curl -XGET $IP:9200/_cat/indices?v\n\n" 
 
 fi
