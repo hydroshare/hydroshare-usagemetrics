@@ -14,6 +14,7 @@ USAGE="Usage: $0 [elasticsearch, kibana, nginx, logstash]\nNo arguments defaults
 prepare() {
   sudo yum update -y  
   sudo yum install wget -y
+  sudo yum install httpd-tools -y
 }
 
 java8() {
@@ -125,9 +126,10 @@ nginx() {
   IP=$(ip addr | grep 'state UP' -A2 | tail -n1 | awk '{print $2}' | cut -f1  -d'/')
   printf -- "--> nginx installation complete.\n\nTest the server by issuing the following commands:\n   curl -i $IP:80\n   curl -i $IP:8080\n"
 
-#  printf -- "--> Creating administrator account for user: cuahsi\n"
-#  sudo htpasswd -c /etc/nginx/htpasswd.users cuahsi 
-#  sudo nginx -s reload
+
+  printf -- "--> creating a user account for kibana\n"
+  printf -- "    username: hydroadmin\n"
+  sudo htpasswd -c /etc/nginx/htpasswd.users hydroadmin 
 }
 
 logstash() {
@@ -164,8 +166,14 @@ logstash() {
 
 firewall() {
 
+  printf "\nStarting Firewalld\n" 
+  sudo systemctl start firewalld
+
   printf "\nConfiguring Firewall\n"
   sudo firewall-cmd --zone=public --add-port=5044/tcp --permanent
+  sudo firewall-cmd --zone=public --add-port=80/tcp --permanent
+  sudo firewall-cmd --zone=public --add-port=81/tcp --permanent
+  sudo firewall-cmd --zone=public --add-port=8080/tcp --permanent
   sudo firewall-cmd --reload
 
   printf -- "--> opened ports\n"
@@ -189,5 +197,11 @@ else
   printf -- "--> ELK installation complete\n"
   printf -- "--> To watch ES indices build, issue the following command: \n"
   printf -- "    $ watch curl -XGET $IP:9200/_cat/indices?v\n\n" 
+  printf -- "   Kibana (readonly) \n"
+  printf -- "   $IP:80 \n"
+  printf -- "   Kibana (hydroadmin, password protected) \n"
+  printf -- "   $IP:81 \n"
+  printf -- "   Kibana API (readonly) \n"
+  printf -- "   $IP:8080 \n\n"
 
 fi
