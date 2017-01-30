@@ -154,6 +154,7 @@ logstash() {
 
   printf -- "--> moving logstash configuration files\n"
   sudo cp -r configs/logstash/*.conf $LOGSTASH_CONFIG 
+  sudo cp -r configs/logstash/*.json /etc/logstash/
 
 #  printf -- "--> testing the logstash configuration\n"
 #  sudo /usr/share/logstash/bin/logstash --configtest -f $LOGSTASH_CONFIG 
