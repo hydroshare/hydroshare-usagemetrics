@@ -169,6 +169,7 @@ firewall() {
 
   printf "\nStarting Firewalld\n" 
   sudo systemctl start firewalld
+  sudo systemctl enable firewalld
 
   printf "\nConfiguring Firewall\n"
   sudo firewall-cmd --zone=public --add-port=5044/tcp --permanent
