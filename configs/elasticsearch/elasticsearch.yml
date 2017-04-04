@@ -16,6 +16,12 @@
 #
 # cluster.name: my-application
 #
+
+# increase threadpool queue size to avoid Courier Fetch errors
+# # $ watch curl localhost:9200/_cat/thread_pool
+# # https://qbox.io/blog/thread-pools-elasticsearch-search-request-errors
+ thread_pool.search.queue_size: 3000
+
 # ------------------------------------ Node ------------------------------------
 #
 # Use a descriptive name for the node:
