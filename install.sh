@@ -165,6 +165,38 @@ logstash() {
   sudo systemctl enable logstash
 }
 
+update_logstash_configs() {
+
+  LOGSTASH_CONFIG="/etc/logstash/conf.d"
+
+  printf -- "--> moving logstash configuration files\n"
+  sudo cp -r configs/logstash/*.conf $LOGSTASH_CONFIG 
+  sudo cp -r configs/logstash/*.json /etc/logstash/
+
+  printf -- "--> starting the logstash service\n"
+  sudo systemctl restart logstash
+  
+  sleep 3
+  isactive logstash
+
+  printf -- "--> testing the logstash configuration\n"
+  sudo /usr/share/logstash/bin/logstash --configtest -f $LOGSTASH_CONFIG 
+
+
+}
+
+isactive() {
+  RED='\033[0;31m'
+  GRN='\033[0;32m'
+  NC='\033[0m' # No Color
+
+  if [ "`sudo systemctl is-active ${1}`" != "active" ]; then
+    echo -e "${RED} [-] ${1} is not running${NC}\n"
+  else  
+    echo -e "${GRN} [+] ${1} is running${NC}\n" 
+  fi
+}
+
 firewall() {
 
   printf "\nStarting Firewalld\n" 
@@ -182,21 +214,17 @@ firewall() {
   sudo firewall-cmd --zone=public --list-ports
 }
 
-# Main
-if [ ! -z ${1:-} ]; then
-  # Run function provided as first argument
-  $1 || { echo -e $USAGE; exit 1; }
-else 
-  # Install everything
-  elasticsearch
-  kibana5
-  nginx
-  logstash
-  firewall
+
+get_status() {
 
   IP=$(ip addr | grep 'state UP' -A2 | tail -n1 | awk '{print $2}' | cut -f1  -d'/')
 
-  printf -- "--> ELK installation complete\n"
+  isactive elasticsearch
+  isactive kibana
+  isactive nginx
+  isactive logstash
+  isactive firewalld
+  
   printf -- "--> To watch ES indices build, issue the following command: \n"
   printf -- "    $ watch curl -XGET $IP:9200/_cat/indices?v\n\n" 
   printf -- "   Kibana (readonly) \n"
@@ -206,4 +234,59 @@ else
   printf -- "   Kibana API (readonly) \n"
   printf -- "   $IP:8080 \n\n"
 
+}
+
+all() {
+  # Install everything
+  elasticsearch
+  kibana5
+  nginx
+  logstash
+  firewall
+}
+
+display_usage() {
+   echo "*** HydroShare ELK Metrics Control Script ***"
+   echo "usage: $0 install-elastic      # install and configure elasticsearch v5.x"
+   echo "usage: $0 install-kibana       # install and configure Kibana v5"
+   echo "usage: $0 install-nginx        # install and configure nginx"
+   echo "usage: $0 install-logstash     # install and configure logstash v2.2"
+   echo "usage: $0 install-firewall     # install and configure firewalld"
+   echo "usage: $0 install-all          # install and configure all ELK components"
+   echo "usage: $0 configure-logstash   # copy logstash configurations and restart logstash"
+   echo "usage: $0 status               # display the status of the ELK services"
+   echo "***"
+}
+
+#echo $1 ${2:-}
+if [ $# -eq 0 ] ; then
+    display_usage
+    exit 1
 fi
+
+case "$1" in
+    "install-elastic") elasticsearch
+        ;;
+    "install-kibana") kibana5
+        ;;
+    "install-nginx") nginx
+        ;;
+    "install-logstash") logstash
+        ;;
+    "install-firewall") firewall
+        ;;
+    "install-all") all 
+        ;;
+    "configure-logstash") update_logstash_configs
+    ;;
+    "status") get_status
+    ;;
+    *) display_usage
+        ;;
+esac
+
+exit 0;
+
+
+
+
