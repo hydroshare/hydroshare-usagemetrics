@@ -60,7 +60,6 @@ run_docker() {
     rootdir=`dirname $0`
 
     echo "====> updating logstash configuration"  
-    mkdir -p ./tests/config/conf.d
     cp ../configs/logstash/*.conf ./tests/config/conf.d
 
     echo "====> Build docker image for test"
@@ -135,25 +134,30 @@ fi
 # Validate directories
 docker_filter_config=$datadir/config/conf.d
 if [[ ! -d $docker_filter_config ]]; then
-    error "The filter config directory '$docker_filter_config' does not exist."
+    mkdir -p $docker_filter_config
+#    error "The filter config directory '$docker_filter_config' does not exist."
 fi
 
 docker_pattern_config=$datadir/config/patterns
 if [[ ! -d $docker_pattern_config ]]; then
-    error "The patterns directory '$docker_pattern_config' does not exist."
+    mkdir -p $docker_pattern_config
+#    error "The patterns directory '$docker_pattern_config' does not exist."
 fi
 
 docker_filter_test=$datadir/test/filters
 if [[ ! -z $filter_test_path ]]; then
-    docker_filter_test=$docker_filter_test/$filter_test_path
+    mkdir -p $filter_test_path
+#    docker_filter_test=$docker_filter_test/$filter_test_path
 fi
 if [[ ! -d $docker_filter_test ]]; then
-    error "The filter tests directory '$docker_filter_test' does not exist."
+    mkdir -p $docker_filter_test
+#    error "The filter tests directory '$docker_filter_test' does not exist."
 fi
 
 docker_pattern_test=$datadir/test/patterns
 if [[ ! -d $docker_pattern_test ]]; then
-    error "The patterns tests directory '$docker_pattern_test' does not exist."
+    mkdir -p $docker_pattern_test
+#    error "The patterns tests directory '$docker_pattern_test' does not exist."
 fi
 
 run_docker $action $configtest $docker_filter_config $docker_pattern_config $docker_filter_test $docker_pattern_test
