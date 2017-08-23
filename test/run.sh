@@ -60,6 +60,7 @@ run_docker() {
     rootdir=`dirname $0`
 
     echo "====> updating logstash configuration"  
+    mkdir -p ./tests/config/conf.d
     cp ../configs/logstash/*.conf ./tests/config/conf.d
 
     echo "====> Build docker image for test"
