@@ -9,6 +9,7 @@
   "cases": [{
     "in": "2017-08-13 23:54:03.097860+00:00 user_id=None session_id=294077 action=visit user_ip=168.181.51.51 http_method=GET http_code=200 user_type=None user_email_domain=None request_url=/",
     "out": {
+    "activity_date_index": "2017.08.13",
     "type": "syslog",
     "action": "visit",
     "user_email_domain": "None",
@@ -33,6 +34,7 @@
   {
     "in": "2017-08-13 13:00:21.983357+00:00 user_id=None session_id=293982 action=visit user_ip=128.211.140.202 http_method=GET http_code=200 user_type=None user_email_domain=None request_url=/django_irods/download/bags/78b6a717c0654cd78fab8cf7e486f425.zip",
     "out": {
+    "activity_date_index": "2017.08.13",
     "type": "syslog",
     "action": "visit",
     "user_email_domain": "None",
@@ -70,6 +72,7 @@
   {
     "in": "2017-08-13 21:15:41.006632+00:00|user_id=41|session_id=291677|action=visit|user_ip=128.211.140.202|http_method=GET|http_code=200|user_type=None|user_email_domain=None|request_url=/hsapi/",
     "out": {
+    "activity_date_index": "2017.08.13",
     "type": "syslog",
     "action": "visit",
     "user_email_domain": "None",

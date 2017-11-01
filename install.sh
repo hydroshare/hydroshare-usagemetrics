@@ -180,7 +180,7 @@ update_logstash_configs() {
   isactive logstash
 
   printf -- "--> testing the logstash configuration\n"
-  sudo /usr/share/logstash/bin/logstash --configtest -f $LOGSTASH_CONFIG 
+  sudo /usr/share/logstash/bin/logstash -t -f $LOGSTASH_CONFIG 
 
 
 }
