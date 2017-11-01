@@ -9,10 +9,30 @@ import pandas as pd
 import multiprocessing as mp
 import datetime
 import pdb
+import signal
 
 # global so that it can be called via processes
 hs = None
 df = None
+
+
+class Timeout():
+    """Timeout class using ALARM signal."""
+    class Timeout(Exception):
+        pass
+
+    def __init__(self, sec):
+        self.sec = sec
+
+    def __enter__(self):
+        signal.signal(signal.SIGALRM, self.raise_timeout)
+        signal.alarm(self.sec)
+
+    def __exit__(self, *args):
+        signal.alarm(0)    # disable alarm
+
+    def raise_timeout(self, *args):
+        raise Timeout.Timeout()
 
 
 def check_pub(q, out_q):
@@ -21,27 +41,20 @@ def check_pub(q, out_q):
         if resid is None:
             return
 
-        scimeta = hs.getScienceMetadata(resid)
-#        sysmeta = hs.getSystemMetadata(resid)
-        funding = scimeta['funding_agencies']
-#
-#        # add more metadata
-        extra = dict(res_title=scimeta['title'],
-                     res_id=resid)
-#                     creator=sysmeta['creator'])
+        with Timeout(10):
+            scimeta = hs.getScienceMetadata(resid)
+            funding = scimeta['funding_agencies']
 
-        # calculate the size of the resource
-#        byte_size = 0
-#        for f in hs.getResourceFileList(resid):
-#            byte_size += f['size']
-#        extra['byte_size'] = byte_size
+            # add more metadata
+            extra = dict(res_title=scimeta['title'],
+                         res_id=resid)
 
-        print('.', end='', flush=True)
-        if len(funding) > 0:
-            print('|', end='')
-            for fund in funding:
-                d = {**fund, **extra}
-                out_q.put(d)
+            print('.', end='', flush=True)
+            if len(funding) > 0:
+                print('|', end='')
+                for fund in funding:
+                    d = {**fund, **extra}
+                    out_q.put(d)
 
 
 def search_hs(resources):
@@ -69,6 +82,7 @@ def search_hs(resources):
         time.sleep(1)
 
     # dequeue the out_q to prevent the underlying pipe from freezing join
+    time.sleep(3)
     data = []
     while not out_q.empty():
         val = out_q.get()
@@ -149,8 +163,8 @@ def collect_resource_ids():
 
 
 st = time.time()
-host = input('Enter host (or www): ') or 'www.hydroshare.org'
 tries = 0
+host = input('Enter host (or www): ') or 'www.hydroshare.org'
 while 1:
     u = input('Enter HS username: ')
     p = getpass.getpass('Enter HS password: ')
@@ -168,13 +182,12 @@ while 1:
         sys.exit(1)
     print('')
 
-
 # collect resource ids and search for funding agencies
 resources = collect_resource_ids()
 df = search_hs(resources)
 
 # print some statistics
-print(50*'-')
+print('\n\n' + 50*'-')
 print('HS Funding Statistics Summary:')
 print(50*'-')
 for col in ['agency_name', 'agency_url', 'award_number', 'award_title']:
@@ -182,5 +195,6 @@ for col in ['agency_name', 'agency_url', 'award_number', 'award_title']:
     print('\n%s' % col.upper())
     for key in ['count', 'unique', 'top', 'freq']:
         print('{:<10} {:<10}'.format(key, stats[key]))
-print('\n')
-print('elapsed time: %5.5f seconds' % (time.time() - st))
+print('Number of resources containing funding metadata: %d' % len(df))
+print('Elapsed time: %5.5f seconds' % (time.time() - st))
+print('\n' + 50*'-' + '\n')
