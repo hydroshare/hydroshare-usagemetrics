@@ -40,7 +40,9 @@ def genstats(nrows, display=1, csvout=1):
     scounts = scounts[['usr_id', 'res_date_created']]
     scounts = scounts.rename(columns={'res_date_created': 'resource_count'})
     top = scounts.head(nrows)
-    top = pandas.merge(top, u, on='usr_id', how='left')
+#    top = pandas.merge(top, u, on='usr_id', how='left')
+    top = pandas.merge(top, u, on='usr_id', how='outer')
+    top.resource_count.fillna(value=0, inplace=1)
     if display:
         print('\nTop %d Users by Resource Count' % nrows)
         pretty_print_df(top[preview_cols + ['resource_count']])
@@ -56,7 +58,9 @@ def genstats(nrows, display=1, csvout=1):
     ssizes.loc[:, 'res_size'] /= 1000000000
     ssizes = ssizes.rename(columns={'res_size': 'resource size GB'})
     top = ssizes.head(nrows)
-    top = pandas.merge(top, u, on='usr_id', how='left')
+#    top = pandas.merge(top, u, on='usr_id', how='left')
+    top = pandas.merge(top, u, on='usr_id', how='outer')
+    top['resource size GB'].fillna(value=0, inplace=1)
     if display:
         print('\nTop %d Users by Resource Size' % nrows)
         pretty_print_df(top[preview_cols + ['resource size GB']])
@@ -70,7 +74,9 @@ def genstats(nrows, display=1, csvout=1):
     ssessions = sessions.sort_values('action', ascending=0)
     top = ssessions.head(nrows)
     top = top.rename(columns={'user_id': 'usr_id', 'action': 'session count'})
-    top = pandas.merge(top, u, on='usr_id', how='left')
+#    top = pandas.merge(top, u, on='usr_id', how='left')
+    top = pandas.merge(top, u, on='usr_id', how='outer')
+    top['session count'].fillna(value=0, inplace=1)
     if display:
         print('\nTop %d Users by Number of Sessions' % nrows)
         pretty_print_df(top[preview_cols + ['session count']])
@@ -86,7 +92,9 @@ def genstats(nrows, display=1, csvout=1):
     top = pub_srt.head(nrows)
     top = top[['usr_id', 'res_pub_status']]
     top = top.rename(columns={'res_pub_status': 'total published'})
-    top = pandas.merge(top, u, on='usr_id', how='left')
+#    top = pandas.merge(top, u, on='usr_id', how='left')
+    top = pandas.merge(top, u, on='usr_id', how='outer')
+    top['total published'].fillna(value=0, inplace=1)
     if display:
         print('\nTop %d Users by Resources Published' % nrows)
         pretty_print_df(top[preview_cols + ['total published']])

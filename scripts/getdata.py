@@ -5,7 +5,8 @@ import pandas
 import elastic
 
 
-def get_stats_data():
+
+def get_stats_data(users=True, resources=True, activity=True):
 
     # standard query parameters
     host = 'usagemetrics.hydroshare.org'
@@ -17,6 +18,7 @@ def get_stats_data():
     aindex = '*activity*'
     afile = 'activity.pkl'
     aquery = '-user_id:None AND -action:visit'
+#    aquery = '-user_id:None'
     cfile = 'combined-stats.pkl'
 
     # clean old files
@@ -26,25 +28,38 @@ def get_stats_data():
             os.remove(p)
 
     # get user data
-    print('--> downloading user metrics')
-    elastic.get_es_data(host, port, uindex, outpik=ufile)
+    if users:
+        print('--> downloading user metrics')
+        elastic.get_es_data(host, port, uindex, outpik=ufile)
+    else: 
+        ufile = ''
 
     # get resource data
-    print('--> downloading resource metrics')
-    elastic.get_es_data(host, port, rindex, outpik=rfile)
+    if resources:
+        print('--> downloading resource metrics')
+        elastic.get_es_data(host, port, rindex, outpik=rfile)
+    else:
+        rfile = ''
 
     # get activity data
-    print('--> downloading activity metrics')
-    elastic.get_es_data(host, port, aindex, query=aquery, outpik=afile)
+    if activity:
+        print('--> downloading activity metrics')
+        elastic.get_es_data(host, port, aindex, query=aquery, outpik=afile)
+    else:
+        afile = ''
 
     # build and export a combined file
     print('--> combining data')
     u = pandas.read_pickle('users.pkl')
     r = pandas.read_pickle('resources.pkl')
-    j = r.join(u, on='usr_id', how='left', lsuffix='_[r]', rsuffix='_[u]')
+    j = None
+    if users and resources:
+        j = r.join(u, on='usr_id', how='left', lsuffix='_[r]', rsuffix='_[u]')
 
-    print('--> saving binary file to: %s' % cfile)
-    j.to_pickle(cfile)
+        print('--> saving binary file to: %s' % cfile)
+        j.to_pickle(cfile)
+    else:
+        cfile = ''
 
     print('--> output files produced')
     print(' -> %s' % ufile)
