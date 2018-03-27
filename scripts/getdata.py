@@ -3,29 +3,30 @@
 import os
 import pandas
 import elastic
+from datetime import datetime
 
 
 
-def get_stats_data(users=True, resources=True, activity=True):
+def get_stats_data(users=True, resources=True, activity=True, dirname='.'):
 
     # standard query parameters
     host = 'usagemetrics.hydroshare.org'
     port = '8080'
+    ufile = os.path.join(dirname, 'users.pkl')
+    rfile = os.path.join(dirname, 'resources.pkl')
+    afile = os.path.join(dirname, 'activity.pkl')
+    cfile = os.path.join(dirname, 'combined-stats.pkl')
     uindex = '*user*latest*'
-    ufile = 'users.pkl'
     rindex = '*resource*latest*'
-    rfile = 'resources.pkl'
     aindex = '*activity*'
-    afile = 'activity.pkl'
     aquery = '-user_id:None AND -action:visit'
 #    aquery = '-user_id:None'
-    cfile = 'combined-stats.pkl'
 
-    # clean old files
-    for p in [ufile, rfile, cfile]:
-        if os.path.exists(p):
-            print('--> removing %s' % p)
-            os.remove(p)
+#    # clean old files
+#    for p in [ufile, rfile, cfile]:
+#        if os.path.exists(p):
+#            print('--> removing %s' % p)
+#            os.remove(p)
 
     # get user data
     if users:
@@ -50,8 +51,8 @@ def get_stats_data(users=True, resources=True, activity=True):
 
     # build and export a combined file
     print('--> combining data')
-    u = pandas.read_pickle('users.pkl')
-    r = pandas.read_pickle('resources.pkl')
+    u = pandas.read_pickle(ufile)
+    r = pandas.read_pickle(rfile)
     j = None
     if users and resources:
         j = r.join(u, on='usr_id', how='left', lsuffix='_[r]', rsuffix='_[u]')
@@ -75,4 +76,15 @@ def get_stats_data(users=True, resources=True, activity=True):
 
 
 if __name__ == '__main__':
-    get_stats_data()
+    # create a directory for these data
+    dirname = datetime.now().strftime('%m.%d.%Y')
+
+    i = 2
+    while os.path.exists(dirname):
+        dirname = dirname[:10] + '_%d' % i
+        i += 1
+    os.makedirs(dirname)
+
+    print('Metrics will be saved into: %s' % dirname)
+
+    get_stats_data(dirname=dirname)
