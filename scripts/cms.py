@@ -5,7 +5,6 @@ import sys
 from cmd import Cmd
 from datetime import datetime
 import getdata
-import save_stats
 import session_stats
 import subprocess
 
