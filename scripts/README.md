@@ -8,21 +8,19 @@ It is recommended to use a Python 3 virtual environment, e.g. anaconda.  The fol
 
 #### 1. Installing Miniconda
 
-- navigate to the [miniconda](https://conda.io/miniconda.html) homepage and download the approproate installer.
+- Navigate to the [miniconda](https://conda.io/miniconda.html) homepage and download the approproate installer.  For example, MacOSX would be:
 
     ```
     $ wget https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
     ```
 
-- execute the installer
+- Execute the installer
 
     ```
     $ bash Miniconda3-latest-MacOSX-x86_64.sh 
     ```
 
-
-- complete instructions can be found [here](https://conda.io/docs/user-guide/install/index.html)
-
+- Complete instructions can be found [here](https://conda.io/docs/user-guide/install/index.html)
 
 #### 2. Installing Required Python Packages
 
@@ -32,16 +30,16 @@ It is recommended to use a Python 3 virtual environment, e.g. anaconda.  The fol
     $ conda create -y -n myenv python=3
     ```
 
-- activate the environment 
+- Activate the environment 
 
     ```
     $ source activate myenv
     ```
 
-- install prerequisites 
+- Install prerequisites 
   
     ```
-    (myenv)$ conda myenv update -f environment.yml
+    (myenv)$ conda env update -n myenv -f environment.yml
     ```
 
 ### Generating Reports  
@@ -51,7 +49,7 @@ It is recommended to use a Python 3 virtual environment, e.g. anaconda.  The fol
 - With an activate python environment, launch the CUAHSI Metrics Shell (CMS)
 
     ```
-    (myenv) $ ./shell.py
+    (myenv) $ ./cms.py
     ----------------------------------------
     CUAHSI Metrics Shell
     ----------------------------------------
@@ -60,6 +58,7 @@ It is recommended to use a Python 3 virtual environment, e.g. anaconda.  The fol
     A directory for your session has been created at: 04.10.2018_2
     (CMS)
     ```
+
 - You are now in CMS and are free to execute predefined commands.  To view these commands, type `help`.
 
     ```
@@ -135,9 +134,3 @@ It is recommended to use a Python 3 virtual environment, e.g. anaconda.  The fol
     -rw-r--r--  1 castro  staff   3509742 Apr 10 13:50 stats.xlsx
     -rw-r--r--  1 castro  staff    589196 Apr 10 13:10 users.pkl
     ```
-
-
-
-
-
-
