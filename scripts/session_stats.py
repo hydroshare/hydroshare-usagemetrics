@@ -228,3 +228,74 @@ def sessions_by_month(workingdir, outxls, st, et):
         wb.write_column(row_start, col, sheetname, data)
         col += 1
     wb.save()
+
+
+def resource_types_by_month(workingdir, outxls, st, et):
+    """
+    Calculates total sessions by month for given date range
+    start_date: start of date range
+    end_date: end of date range
+    """
+    
+    print('--> loading resource statistics')
+
+    # load the activity data
+    apath = os.path.join(workingdir, 'resources.pkl')
+    df = pandas.read_pickle(apath)
+
+    # convert dates
+    df['date'] = pandas.to_datetime(df.res_date_created)
+
+    # select dates between start/end range
+    mask = (df.date >= st) & (df.date <= et)
+    df = df.loc[mask]
+
+    # replace NaN to clean xls output
+    df = df.fillna('')
+
+    # change the index to timestamp
+    df.set_index(['date'], inplace=True)
+
+    # groupby month
+    dfm = df.groupby([pandas.TimeGrouper('M'), df.res_type]).count()
+
+#    df_sessions = df[df.action == 'begin_session']
+#    df_applaunch = df[df.action == 'app_launch']
+#    df_create = df[df.action == 'create']
+#    df_download = df[df.action == 'download']
+#    df_delete = df[df.action == 'delete']
+#
+#    print('--> found %d sessions ' % (df_sessions['action'].count()))
+#    print('--> found %d app_launch ' % (df_applaunch['action'].count()))
+#    print('--> found %d creates ' % (df_create['action'].count()))
+#    print('--> found %d downloads ' % (df_download['action'].count()))
+#    print('--> found %d deletes ' % (df_delete['action'].count()))
+#
+    print('--> saving resource statistics')
+
+    # save the activity data for the specified date range
+    wb = workbook(outxls)
+    sheetname = wb.add_sheet('resource_types')
+
+    comments = ['# NOTES',
+                '# Created on %s' % (datetime.now()),
+                '\n']
+
+    # write pandas data
+#    print('--> writing dataframe to xlsx')
+    cols = ['@timestamp', 'res_created_dt_str',
+            'res_date_created', 'res_pub_status',
+            'res_size', 'usr_id', 'usr_type']
+
+    # write comments
+    wb.write_column(0, 0, sheetname, comments)
+
+    row_start = len(comments) + 2
+    col = 0
+    for col_name in cols:
+        print('--> writing %s to xlsx' % col_name)
+        data = df[col_name].tolist()
+        data.insert(0, col_name)
+        wb.write_column(row_start, col, sheetname, data)
+        col += 1
+    wb.save()

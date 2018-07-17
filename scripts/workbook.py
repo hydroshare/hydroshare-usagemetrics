@@ -23,7 +23,6 @@ class workbook(object):
             print('--> loading existing workbook... ', end='')
             self.wb = load_workbook(self.path)
             print('done')
-        print(self.wb)
 
     def sheets(self):
         return self.wb.worksheets

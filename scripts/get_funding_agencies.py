@@ -14,6 +14,7 @@ import signal
 # global so that it can be called via processes
 hs = None
 df = None
+wrkdir = None
 
 
 class Timeout():
@@ -92,8 +93,8 @@ def search_hs(resources):
 
     # saving results to at data frame
     df = pd.DataFrame(data)
-    df.to_pickle('funding.pkl')
-    df.to_csv('funding.csv')
+    df.to_pickle(os.path.join(wrkdir, 'funding.pkl'))
+#    df.to_csv(os.path.join(wrkdir, 'funding.csv'))
 
     return df
 
@@ -163,28 +164,48 @@ def collect_resource_ids():
 
 
 st = time.time()
-tries = 0
-host = input('Enter host (or www): ') or 'www.hydroshare.org'
-while 1:
-    u = input('Enter HS username: ')
-    p = getpass.getpass('Enter HS password: ')
-    auth = hsapi.HydroShareAuthBasic(username=u, password=p)
-    hs = hsapi.HydroShare(hostname=host, auth=auth)
-    try:
-        hs.getUserInfo()
-        break
-    except hsapi.exceptions.HydroShareHTTPException:
-        print('Authentication failed, attempt %d' % (tries+1))
-        tries += 1
 
-    if tries >= 3:
-        print('Number of attempts exceeded, exiting')
-        sys.exit(1)
-    print('')
+while wrkdir is None:
+    wrkdir = input('Enter working directory: ') or None
+    if not os.path.exists(wrkdir):
+        print('Path does not exist, please enter a valid working directory')
+        wrkdir = None
+    elif not os.path.exists(os.path.join(wrkdir, 'resources.pkl')):
+        print('Metrics data does not exist in the working directory. '
+              'Please collect data before proceeding')
+        sys.exit(-1)
 
-# collect resource ids and search for funding agencies
-resources = collect_resource_ids()
-df = search_hs(resources)
+if not os.path.exists(os.path.join(wrkdir, 'funding.pkl')):
+    tries = 0
+    host = input('Enter host (or www): ') or 'www.hydroshare.org'
+    while 1:
+        u = input('Enter HS username: ')
+        p = getpass.getpass('Enter HS password: ')
+        auth = hsapi.HydroShareAuthBasic(username=u, password=p)
+        hs = hsapi.HydroShare(hostname=host, auth=auth)
+        try:
+            hs.getUserInfo()
+            break
+        except hsapi.exceptions.HydroShareHTTPException:
+            print('Authentication failed, attempt %d' % (tries+1))
+            tries += 1
+    
+        if tries >= 3:
+            print('Number of attempts exceeded, exiting')
+            sys.exit(1)
+        print('')
+    
+    # collect resource ids and search for funding agencies
+    resources = collect_resource_ids()
+    df = search_hs(resources)
+else:
+    df = pd.read_pickle(os.path.join(wrkdir, 'funding.pkl'))
+
+res_df = pd.read_pickle(os.path.join(wrkdir, 'resources.pkl'))
+
+# join with resources dataframe
+df = pd.merge(df, res_df, how='outer', left_on="res_title", right_on="res_title")
+df.to_csv(os.path.join(wrkdir, 'funding.csv'))
 
 # print some statistics
 print('\n\n' + 50*'-')

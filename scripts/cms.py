@@ -7,7 +7,11 @@ from datetime import datetime
 import getdata
 import save_stats
 import session_stats
+import user_stats
 import subprocess
+import check_for_test_users
+import general_stats
+
 
 class MyCmd(Cmd):
 
@@ -86,8 +90,10 @@ class MyCmd(Cmd):
         # parse the start and end dates
         dates = args.split()
         if len(dates) < 2:
-            print('\n\tnot enough arguments')
-            return
+            et = datetime.now().strftime('%m-%d-%Y')
+            # set large date range
+            dates = ['01-01-2000',
+                     et]
 
         # check date formats
         try:
@@ -108,6 +114,142 @@ class MyCmd(Cmd):
         session_stats.fig_session_by_month(self.working_dir, st, et)
         session_stats.fig_actions_by_university(self.working_dir, st, et)
 
+    def do_calculate_resource_stats(self, args):
+        """
+        Calculate session statistics from activity logs.
+
+        usage: calculate_session_stats [a] [b]
+        - a: start date, MM-DD-YYYY
+        - b: end date, MM-DD-YYYY
+        """
+
+        # parse the start and end dates
+        dates = args.split()
+        if len(dates) < 2:
+            # set large date range
+            et = datetime.now().strftime('%m-%d-%Y')
+            dates = ['01-01-2000',
+                     et]
+
+        # check date formats
+        try:
+            st = datetime.strptime(dates[0].strip(), '%m-%d-%Y')
+            et = datetime.strptime(dates[1].strip(), '%m-%d-%Y')
+        except ValueError:
+            print('\tincorrect date format')
+            return
+
+        # save user data, check that pickle files exist before saving
+        if not os.path.exists(os.path.join(self.working_dir, 'activity.pkl')):
+            print('\n\tcould not find \'activity.pkl\', skipping.'
+                  '\n\trun \'collect_hs_data\' to retrieve these missing data')
+            return
+
+        # generate statistics
+        session_stats.resource_types_by_month(self.working_dir, self.outxls, st, et)
+
+    def do_general_statistics(self, args):
+        """
+        Computes general statistics, ideal for NSF reporting.
+        usage: general_stats
+        """
+        general_stats.run(self.working_dir)
+
+
+    def do_check_test_accounts(self, args):
+        """
+        Run a check on test user accounts.
+
+        usage: check_test_accounts [userdata.csv]
+        - userdata.csv: a csv file containing "usr_id", "username", "first_name",
+                        and "last_name". This file is collected by exporting the 
+                        auth_user table in the production dbshell.
+        """
+        arguments = args.split()
+        print(arguments)
+        userdata = None
+        if len(arguments) == 0:
+            print('--> [userdata.csv] not provided. Looking for it in the current'
+                  ' directory... ', end='', flush=True)
+            default_path = os.path.join(self.working_dir, 'userdata.csv')
+            if not os.path.exists(default_path):
+                print('\n--> ERROR: Could not find userdata.csv. This file must'
+                      ' be collected from prod dbshell before continuing')
+                return
+            userdata = default_path
+            print('done')
+        else:
+            userdata = arguments[1]
+
+        check_for_test_users.run_check(self.working_dir, userdata)
+
+    def do_users(self, args):
+
+        """
+        Generate User Statistics from HydroShare logs.
+
+        usage: users [function] [st] [et]
+        - function: user function to invoke: 
+            - all: all user plots
+            - save: save data to xlsx
+            - overview: general overview of users
+            - active: summary only active users
+            - new: summary of new users
+            - retained: summary of retained users
+            - stats: generate statistics summary table
+        - st: start date (optional), MM-DD-YYYY
+        - et: end date (optional), MM-DD-YYYY
+        """
+        funcs = ['all', 'save', 'overview', 'active', 'retained', 'new', 'stats']
+        
+        arguments = args.split()
+        if len(arguments) < 1:
+            self.do_help('users')
+            return
+        elif arguments[0] not in funcs:
+            self.do_help('users')
+            return
+
+        # parse the start and end dates
+        if len(arguments) != 3:
+            # set large date range
+            et = datetime.now().strftime('%m-%d-%Y')
+            arguments = [arguments[0],
+                         '01-01-2000',
+                         et]
+
+        # check date formats
+        try:
+            st = datetime.strptime(arguments[1].strip(), '%m-%d-%Y')
+            et = datetime.strptime(arguments[2].strip(), '%m-%d-%Y')
+        except ValueError:
+            print('\tincorrect date format')
+            return
+
+        # save user data, check that pickle files exist before saving
+        if not os.path.exists(os.path.join(self.working_dir, 'activity.pkl')):
+            print('\n\tcould not find \'activity.pkl\', skipping.'
+                  '\n\trun \'collect_hs_data\' to retrieve these missing data')
+            return
+
+        # generate statistics
+        user = user_stats.Users(self.working_dir, self.outxls, st, et)
+        
+        func = arguments[0]
+        if func == 'all':
+            user.all()
+        elif func == 'save':
+            user.save()
+        elif func == 'overview':
+            user.users_over_time()
+        elif func == 'active':
+            user.users_active()
+        elif func == 'new':
+            user.users_new()
+        elif func == 'retained':
+            user.users_retained()
+        elif func == 'stats':
+            user.user_stats()
 
     def do_cwd(self, workingdir):
         """

@@ -5,38 +5,9 @@ import pandas as pd
 from tabulate import tabulate
 import re
 
-users_pkl = 'users.pkl'
-resources_pkl = 'resources.pkl'
-activity_pkl = 'activity.pkl'
-users_csv = 'userdata.csv'
-
-query_data = False
-for f in [users_pkl, resources_pkl, activity_pkl]:
-    if not os.path.exists(f):
-        query_data = True
-        break
-
-if query_data:
-    import getdata
-    getdata.get_stats_data()
-
-print('--> loading users.pkl')
-df = pd.read_pickle(users_pkl)
-
-print('--> loading resources.pkl')
-dfr = pd.read_pickle(resources_pkl)
-
-print('--> loading activity.pkl')
-dfa = pd.read_pickle(activity_pkl)
-
-print('--> loading usernames')
-ud = pd.read_csv(users_csv, dtype={'usr_id': str})
-df = pd.merge(df, ud, on='usr_id', how='inner')
-
-test_account_list = []
 
 
-def get_test_users(patterns):
+def get_test_users(df, patterns):
 
     test_accounts = pd.DataFrame()
     search_cols = ['username', 'usr_firstname', 'usr_lastname']
@@ -144,45 +115,55 @@ def calculate_app_activity(df, ids):
     print(table)
 
 
+def run_check(working_dir='.', userdata='userdata.csv'):
+    users_pkl = os.path.join(working_dir, 'users.pkl')
+    resources_pkl = os.path.join(working_dir, 'resources.pkl')
+    activity_pkl = os.path.join(working_dir, 'activity.pkl')
+    users_csv = userdata
 
-# determine test users
-patterns = '^demo.*$|^.*test.*$'
-print('\nTest User Accounts')
-ids = get_test_users(patterns)
+    missing_data = False
+    for f in [users_pkl, resources_pkl, activity_pkl, users_csv]:
+        if not os.path.exists(f):
+            missing_data = True
+            print('missing file: %s.'
+                  'Please collect this file before proceeding.' % f)
+    if missing_data:
+        return
 
-# determine activity from test accounts
-print('\nActivity from Test Users')
-calculate_activity_stats(dfa, ids)
+    print('--> loading users.pkl... ', end='', flush=True)
+    df = pd.read_pickle(users_pkl)
+    print('done')
 
-# determine resources from test accounts
-print('\nResources from Test Users')
-calculate_resource_stats(dfr, ids)
+    print('--> loading resources.pkl... ', end='', flush=True)
+    dfr = pd.read_pickle(resources_pkl)
+    print('done')
 
-# determine app activity by test users
-print('\nApp activity from Test Users')
-calculate_app_activity(dfa, ids)
+    print('--> loading activity.pkl... ', end='', flush=True)
+    dfa = pd.read_pickle(activity_pkl)
+    print('done')
 
-# isolate resources from test accounts users
-#test_resources = dfr[dfr.usr_id.isin(ids)]
-#print('%d of %d resources are from test accounts ==> %3.5f %%' %
-#      (len(test_resources),
-#       len(dfr),
-#       100 * (len(test_resources)/len(dfr))))
+    print('--> loading usernames... ', end='', flush=True)
+    ud = pd.read_csv(users_csv, dtype={'usr_id': str})
+    df = pd.merge(df, ud, on='usr_id', how='inner')
+    print('done')
 
-# isolate resources that contain 'test' in the title
+    # determine test users
+    patterns = '^demo.*$|^.*test.*$'
+    print('\nTest User Accounts')
+    ids = get_test_users(df, patterns)
+
+    # determine activity from test accounts
+    print('\nActivity from Test Users')
+    calculate_activity_stats(dfa, ids)
+
+    # determine resources from test accounts
+    print('\nResources from Test Users')
+    calculate_resource_stats(dfr, ids)
+
+    # determine app activity by test users
+    print('\nApp activity from Test Users')
+    calculate_app_activity(dfa, ids)
 
 
-# isolate resources that contain 'test' in the abstract
-
-
-# isolate activity from test accounts
-
-
-
-
-
-
-
-
-
-
+if __name__ == "__main__":
+    run_check()
