@@ -4,6 +4,7 @@ import os
 import pandas as pd
 from tabulate import tabulate
 
+import latex
 
 
 def print_table(df, columns, headers=[], orderby=None):
@@ -27,7 +28,7 @@ def print_table(df, columns, headers=[], orderby=None):
     print(table)
 
 
-def run(wrkdir):
+def run(wrkdir, write_latex=0):
 
     totals = []
     dfu = pd.read_pickle(os.path.join(wrkdir, 'users.pkl'))
@@ -148,6 +149,7 @@ def run(wrkdir):
     ##### SUMMARY TABLES #####
     ##########################
 
+    # print in tabular form directly to the terminal
     print_table(user_data,
                 columns=['num_users', 'num_resources',
                          'res_size', 'num_logins'],
@@ -159,6 +161,47 @@ def run(wrkdir):
                 columns=['res_count', 'res_size'],
                 headers=['Number of Resources', 'Resource Size (GB)'],
                 orderby=resource_types)
+
+    # create pdfs using LaTex
+    if write_latex:
+        print('--> writing to LaTex')
+
+        user_data = user_data.rename(columns={'num_users': 'Number of Users',
+                                              'num_resources': 'Number of Resources',
+                                              'res_size': 'Resource Size (GB)',
+                                              'num_logins': 'Login Count'})
+
+        ofile = latex.write_table(
+                                  fname=os.path.join(wrkdir, 'user_statistics_table.tex'),
+                                  dat=user_data,
+                                  index_list=user_types,
+                                  fmt=['%3.0f', '%3.0f', '%3.5f', '%3.0f'],
+                                  lcol='User Type',
+                                  pdfwidth=200,
+                                  pdfheight=55,
+                                  hoffset=-45,
+                                  voffset=-40)
+
+        latex.build_latex_pdf(ofile, wrkdir)
+
+        res_data = res_data.rename(columns={'res_count': 'Number of Resources',
+                                            'res_size': 'Resource Size (GB)'})
+
+        ofile = latex.write_table(
+                                  fname=os.path.join(wrkdir,
+                                        'resource_statistics_table.tex'),
+                                  dat=res_data,
+                                  index_list=resource_types,
+                                  fmt=['%3.0f', '%3.5f'],
+                                  lcol='Resource Type',
+                                  pdfwidth=135,
+                                  pdfheight=65,
+                                  hoffset=-45,
+                                  voffset=-40)
+
+        latex.build_latex_pdf(ofile, wrkdir)
+
+
 
     print('\nTotals')
     for t in totals:

@@ -152,7 +152,7 @@ class MyCmd(Cmd):
         Computes general statistics, ideal for NSF reporting.
         usage: general_stats
         """
-        general_stats.run(self.working_dir)
+        general_stats.run(self.working_dir, 1)
 
 
     def do_check_test_accounts(self, args):
@@ -182,48 +182,88 @@ class MyCmd(Cmd):
 
         check_for_test_users.run_check(self.working_dir, userdata)
 
-    def do_users(self, args):
+
+
+    def do_user(self, args):
 
         """
         Generate User Statistics from HydroShare logs.
 
         usage: users [function] [st] [et]
         - function: user function to invoke: 
-            - all: all user plots
-            - save: save data to xlsx
-            - overview: general overview of users
-            - active: summary only active users
-            - new: summary of new users
-            - retained: summary of retained users
+            - overview [options] [args]: create a summary users
+               - options
+                 -c: aggregation integer
+                 -n: aggregation descriptor
+               - args
+                 all: create an overview of all users
+                 active: create an overview of active users
+
             - stats: generate statistics summary table
+            
+            X- all: all user plots
+            X- save: save data to xlsx
+            X- overview: general overview of users
+            X- new: summary of new users
+            X- retained: summary of retained users
         - st: start date (optional), MM-DD-YYYY
         - et: end date (optional), MM-DD-YYYY
         """
-        funcs = ['all', 'save', 'overview', 'active', 'retained', 'new', 'stats']
-        
+        funcs = ['all',
+                 'save',
+                 'overview',
+                 'retained',
+                 'new',
+                 'stats',
+                 'read-activity']
+
+        kwargs = {}
+        fargs = []
         arguments = args.split()
         if len(arguments) < 1:
             self.do_help('users')
             return
         elif arguments[0] not in funcs:
-            self.do_help('users')
+            print('Unrecognized command: "%s"' % arguments[0])
             return
+        if len(arguments) > 1:
+            ar = arguments[1:]
+            try:
+                while len(ar) > 0:
+                    k = ar.pop(0)
+                    if k[0] != '-':
+                        fargs.append(k)
+                        continue
+                    v = ar.pop(0)
+                    kwargs[k[1:]] = v
+            except:
+                print('Error parsing arguments\n--> %s' % ' '.join(arguments))
+                self.do_help('users')
+                return
 
-        # parse the start and end dates
-        if len(arguments) != 3:
-            # set large date range
-            et = datetime.now().strftime('%m-%d-%Y')
-            arguments = [arguments[0],
-                         '01-01-2000',
-                         et]
+
+#        # parse the start and end dates
+#        if len(arguments) != 3:
+#            # set large date range
+#            et = datetime.now().strftime('%m-%d-%Y')
+#            arguments = [arguments[0],
+#                         '01-01-2000',
+#                         et]
 
         # check date formats
+        st_str = kwargs.get('st', '01-01-2000')
+        et_str = kwargs.get('et', datetime.now().strftime('%m-%d-%Y'))
+
         try:
-            st = datetime.strptime(arguments[1].strip(), '%m-%d-%Y')
-            et = datetime.strptime(arguments[2].strip(), '%m-%d-%Y')
+            st = datetime.strptime(st_str, '%m-%d-%Y')
         except ValueError:
-            print('\tincorrect date format')
-            return
+            st = datetime.strptime('01-01-2000', '%m-%d-%Y')
+            print('\tincorrect start date format, using default start date: 01-01-2000')
+        try:
+            et = datetime.strptime(et_str, '%m-%d-%Y')
+        except ValueError:
+            et = datetime.now()
+            print('\tincorrect end date format, using default start date: %s' % et.strftime('%m-%d-%Y'))
 
         # save user data, check that pickle files exist before saving
         if not os.path.exists(os.path.join(self.working_dir, 'activity.pkl')):
@@ -235,20 +275,22 @@ class MyCmd(Cmd):
         user = user_stats.Users(self.working_dir, self.outxls, st, et)
         
         func = arguments[0]
-        if func == 'all':
-            user.all()
-        elif func == 'save':
-            user.save()
-        elif func == 'overview':
-            user.users_over_time()
-        elif func == 'active':
-            user.users_active()
-        elif func == 'new':
-            user.users_new()
-        elif func == 'retained':
-            user.users_retained()
+#        if func == 'all':
+#            user.all()
+#        elif func == 'save':
+#            user.save()
+#        elif func == 'overview':
+#            user.users_over_time()
+        if func == 'overview':
+            user.generate_user_overview(*fargs, **kwargs)
+#        elif func == 'new':
+#            user.get_new_users()
+#        elif func == 'retained':
+#            user.users_retained()
         elif func == 'stats':
             user.user_stats()
+        elif func == 'read-activity':
+            return user.read_user_activity(**kwargs)
 
     def do_cwd(self, workingdir):
         """
@@ -302,7 +344,6 @@ class MyCmd(Cmd):
         Exits the shell
         """
         raise SystemExit()
-
 
 if __name__ == "__main__":
     dirname = None

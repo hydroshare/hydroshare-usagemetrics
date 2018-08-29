@@ -9,6 +9,14 @@ from datetime import datetime, timedelta
 from workbook import workbook
 from collections import OrderedDict
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
+
+class PlotObject(object):
+    def __init__(self, x, y, label='', style='b-'):
+        self.x = x
+        self.y = y
+        self.label = label
+        self.style = style
 
 
 class Users(object):
@@ -23,13 +31,14 @@ class Users(object):
 
     def load_data(self):
 
-        print('--> reading user statistics...', end='', flush=True)
+        print('--> reading user statistics ')
         # load the activity data
         path = os.path.join(self.workingdir, 'users.pkl')
         df = pandas.read_pickle(path)
 
         # convert dates
         df['date'] = pandas.to_datetime(df.usr_created_date).dt.normalize()
+
         df.usr_created_date = pandas.to_datetime(df.usr_created_date).dt.normalize()
         df.usr_last_login_date = pandas.to_datetime(df.usr_last_login_date).dt.normalize()
         df.report_date = pandas.to_datetime(df.report_date).dt.normalize()
@@ -39,10 +48,11 @@ class Users(object):
         # replace NaN to clean xls output
         df = df.fillna('')
 
-        # change the index to timestamp
-        df.set_index(['date'], inplace=True)
+        # add another date column and make it the index
+        df['Date'] = df['date']
 
-        print('done', flush=True)
+        # change the index to timestamp
+        df.set_index(['Date'], inplace=True)
 
         return df
 
@@ -161,76 +171,6 @@ class Users(object):
         print('done', flush=True)
 
 
-#        while t < self.et:
-#            df['days-since-login'] = (t - df.usr_last_login_date).astype('timedelta64[D]')
-#            df['account-age'] = (t - df.usr_created_date).astype('timedelta64[D]')
-#            df['is-new-user'] = np.where((df['account-age'] <= 90) &
-#                                         (df['account-age'] >= 0), 1, 0)
-#            df['is-active'] = np.where(((df['days-since-login'] <= 90) &
-#                                        (df['days-since-login'] >= 0)) ,
-#                                            1, 0)
-#            df['is-returning-user'] = np.where((df['is-new-user'] == 0) &
-#                                               (df['days-since-login'] <= 90) &
-#                                               (df['days-since-login'] >= 0),
-#                                               1, 0)
-#
-#            # The number of users active at time dateJoined[i] is all who created an account before dateJoined[i]
-#            # i.e. the range 1:i, who have logged in after dateJoine[i]-activerange
-##            df['is-active'] = np.where(df.usr_last_login_date >
-##                                       ((t - timedelta(days=90)) &
-##                                        (df.usr_last_login_date <= t)),
-##                                       1, 0)
-#            # The number of new users in activerange up to time dateJoined[i] (i.e. the range 1:i) are users who 
-#            # created their account after dateJoine[i]-activerange
-#            df['is-new'] = np.where(df.usr_created_date > 
-#                                    (t - timedelta(days=90)),
-#                                    1, 0)
-#
-#            total_accounts = df[df['account-age'] >= 0]['account-age'].count()
-##            total_new = df['is-new-user'].sum()
-##            total_active = df['is-active-user'].sum()
-#            total_active = df['is-active'].sum()
-#            total_new = df['is-new'].sum()
-##            total_returning = df['is-returning-user'].sum()
-#            res.append([t, total_accounts, total_active, 
-#                        total_new])#, total_returning])
-#
-##            import pdb; pdb.set_trace()
-#            t += timedelta(days=1)
-#        print('done', flush=True)
-#
-#        print('--> saving rolling statistics... ', end='', flush=True)
-#        opath = os.path.join(self.workingdir, 'rolling-stats.csv')
-#        with open(opath, 'w') as f:
-#            f.write('date, total-accounts, total-active,'
-#                    'total-new, total-returning\n')
-#            for r in res:
-#                f.write('%s, %s\n' % (r[0], ','.join(map(str, r[1:]))))
-#        print('done', flush=True)
-#
-#        print('--> creating user statistics figure... ', end='', flush=True)
-#        fig = plt.figure()
-#        plt.xticks(rotation=45)
-#        plt.subplots_adjust(bottom=0.15)
-#        plt.ylabel('Number Users')
-#        plt.xlabel('Date')
-#        plt.title('HydroShare Users as of %s' % (self.et.strftime(
-#                                                 '%Y-%m-%d')))
-#        d = np.array(res)
-#        plt.plot(d[:, 0], d[:, 1], color='k', linestyle='-',
-#                 label='Total')
-#        plt.plot(d[:, 0], d[:, 2], color='b', linestyle='--',
-#                 label='Active (last 90 days)')
-#        plt.plot(d[:, 0], d[:, 3], color='r', linestyle='--',
-#                 label='New (last 90 days)')
-#        plt.legend()
-#        plt.tight_layout()
-#        outpath = os.path.join(self.workingdir, "users-overview.png")
-#        plt.savefig(outpath)
-#
-#        print('done', flush=True)
-
-
     def subset_df_by_date(self, df):
 
         # select dates between start/end range
@@ -258,10 +198,6 @@ class Users(object):
 
         # write pandas data
         cols = list(self.df.columns)
-#        cols = ['@timestamp', 'usr_created_date',
-#                'usr_created_dt_str', 'usr_email', 'usr_firstname', 'usr_id',
-#                'usr_last_login_date', 'usr_last_login_dt_str', 'usr_lastname',
-#                'usr_organization', 'usr_type', 'days-since-login']
 
         # write comments
         wb.write_column(0, 0, sheetname, comments)
@@ -363,32 +299,6 @@ class Users(object):
         self.df.to_pickle(os.path.join(self.workingdir, 'df.pkl'))
 
 
-
-
-#    def users_over_time(self):
-#        """
-#        Calculate total users over time
-#        workingdir: directory where the users.pkl file is located
-#        start_date: start of date range
-#        end_date: end of date range
-#        """
-#
-#        # groupby day, and calculate the cumsum
-#        dfm = self.df.groupby(pandas.TimeGrouper('W')).count().usr_id.cumsum()
-#        dfm = self.subset_series_by_date(dfm)
-#
-#        # plot
-#        print('--> creating figure: users-overview.png')
-#        fig = plt.figure()
-#        plt.xticks(rotation=45)
-#        plt.subplots_adjust(bottom=0.15)
-#        plt.ylabel('Number of Total Users')
-#        plt.title('HydroShare Users by Date Created')
-#        plt.plot(dfm.index, dfm,
-#                 color='b', linestyle='-')
-#        outpath = os.path.join(self.workingdir, "users-overview.png")
-#        plt.savefig(outpath)
-
     def users_active(self):
 
         """
@@ -423,33 +333,260 @@ class Users(object):
         outpath = os.path.join(self.workingdir, "users-active.png")
         plt.savefig(outpath)
 
-    def users_new(self):
+    def generate_user_overview(self, *args, c=1, n='W'):
+        aggregation = '%d%s' % (int(c), n)
+        dfa = self.df.groupby(pandas.Grouper(key='date',
+                              freq=aggregation))
+        df = self.read_user_login_activity(agg_count=int(c),
+                                           agg_name=n)
+        for arg in args:
+            if arg == 'all':
+                self.generate_all_user_overview(dfa=dfa, dfu=df)
+            elif arg == 'active':
+                self.generate_active_user_overview(df)
+        if len(args) == 0:
+            self.generate_all_user_overview(dfa=dfa, dfu=df)
+            self.generate_active_user_overview(df)
+
+
+    def generate_all_user_overview(self, dfa, dfu):
+        """
+        Generates a figure that summarizes all users over the
+        current time frame.
+        """
+
+        # determine the number of active users through time by
+        # aggregating the sum of logins from unique users through
+        # time.
+        print('--> calculating unique ids')
+        dfa = dfa.usr_id.nunique()
+
+        # remove the first and last dates because these likely have
+        # incomplete data and will skew the figure.
+        dfa = dfa[1:-1]
+
+        # create plot object
+        plotObj = PlotObject(dfa.index,
+                             dfa.cumsum(),
+                             label='All Users',
+                             style='k.-')
+
+        plts = []
+        plts.append(plotObj)
+
+        active_plt = self.get_active_users(dfu)
+        active_plt.style = 'b.-'
+        plts.append(active_plt)
+
+        plts.append(self.get_new_users(dfu))
+
+        minx = dfu.user_id.nunique().index.min()
+        maxx = dfu.user_id.nunique().index.max()
+        self.plot(plts,
+                  'hs-all-user-overview',
+                  **dict(title='HydroShare Users',
+                         xlabel='Time',
+                         ylabel='Number of Users'),
+                         xlim=(minx, maxx))
+
+    def generate_active_user_overview(self, df):
+        """
+        Generates a figure that summarizes user activity over the
+        current time frame.
+        """
+        plts = []
+        dat = self.get_active_users(df)
+        dat.style = 'k-'
+        plts.append(dat)
+
+        dat = self.get_new_users(df)
+        dat.style = 'r-'
+        plts.append(dat)
+        
+        dat = self.get_returning_users(df)
+        dat.style = 'b-'
+        plts.append(dat)
+
+        self.plot(plts,
+                  'hs-active-user-overview',
+                  **dict(title='HydroShare Users',
+                         xlabel='Time',
+                         ylabel='Number of Users'))
+
+    def read_user_login_activity(self, agg_count=1, agg_name='M'):
+        # load the activity logs
+        print('--> reading data')
+        activity_path = os.path.join(self.workingdir, 'activity.pkl')
+        df = pandas.read_pickle(activity_path)
+
+        # create a date column based on the session_timestamp
+        # object that is stored in the elasticsearch database.
+        # this will be used to group the data by date range.
+        print('--> creating date column')
+        df['date'] = pandas.to_datetime(df.session_timestamp)
+
+        # select only the data for action=login. This metric
+        # will be used to show the number of active users at any
+        # given time frame
+        print('--> subsetting login actions')
+        df = df[df.action == 'login']
+        df.to_csv('raw_data.csv')
+
+        return df
+    
+    def get_active_users(self, df, n=90):
 
         """
-        Calculate total new users
+        Calculate total active users based on activity logs
         """
 
-        # determine if they are new
-        self.df['isnew'] = (datetime.today() - self.df.usr_created_date).astype('timedelta64[D]')
-        self.df.loc[(self.df.isnew >= 0) & (self.df.isnew <= 90), 'isnew'] = 1
-        self.df.loc[self.df.isnew != 1, 'isnew'] = 0
-        self.df.fillna(0.0)
+        print('--> calculating active users, n=%d' % n)
 
-        # groupby day, and calculate the cumsum
-        dfm = self.df.copy()
-        dfm = dfm.groupby(pandas.TimeGrouper('W')).sum().isnew.cumsum()
-        dfm = self.subset_series_by_date(dfm)
+        curr_dt = df.date.min().date()
+        end_dt = df.date.max().date()
+        dates, active_count = ([], [])
+        while curr_dt < end_dt:
+            print('.', end='', flush=True)
+            dt_n = curr_dt - timedelta(days=n)
+            d = df[(df['date'] <= curr_dt) &
+                   (df['date'] >= dt_n)]
+            dates.append(curr_dt)
+            active_count.append(d.user_id.nunique())
 
-        # plot
-        print('--> creating figure: users-new.png')
-        fig = plt.figure()
+            curr_dt += timedelta(days=1)
+
+        print('\n')
+
+        # create plot object
+        plotObj = PlotObject(dates,
+                             active_count,
+                             label='Total Active Users',
+                             style='k.-')
+        return plotObj
+    
+    def get_new_users(self, df, n=90):
+
+        """
+        Calculate total new users based on activity logs
+        """
+
+        print('--> calculating new users, n=%d' % n)
+        curr_dt = df.date.min().date()
+        end_dt = df.date.max().date()
+        dates, new_count = ([], [])
+        while curr_dt < end_dt:
+            print('.', end='', flush=True)
+            dt_n = curr_dt - timedelta(days=n)
+            d = df[(df['date'] <= curr_dt) &
+                   (df['date'] >= dt_n)]
+
+            # isolate the records that are older than "n" days, i.e.
+            # < dt_n
+            d_old = df[(df['date'] < dt_n)]
+
+            # isolate the users that have been active before the
+            # current time period
+            old_users = set(d_old.user_id.unique())
+
+            # isolate the users that have been active in the
+            # current time period, i.e. dt_n <= dt <= curr_dt
+            curr_users = set(d.user_id.unique())
+
+            # calculate curr users that are not in old_users
+            new_count.append(len(curr_users - old_users))
+            dates.append(curr_dt)
+
+            curr_dt += timedelta(days=1)
+
+        print('\n')
+
+        # create plot object
+        plotObj = PlotObject(dates,
+                             new_count,
+                             label='New Users',
+                             style='r.-')
+        return plotObj
+
+    def get_returning_users(self, df, n=90):
+
+        """
+        Calculate total returning users based on activity logs
+        """
+
+        print('--> calculating returning users, n=%d' % n)
+        curr_dt = df.date.min().date()
+        end_dt = df.date.max().date()
+        dates, ret_count = ([], [])
+        while curr_dt < end_dt:
+            print('.', end='', flush=True)
+            dt_n = curr_dt - timedelta(days=n)
+            d = df[(df['date'] <= curr_dt) &
+                   (df['date'] >= dt_n)]
+
+            # isolate the records that are older than "n" days, i.e.
+            # < dt_n
+            d_old = df[(df['date'] < dt_n)]
+
+            # isolate the users that have been active before the
+            # current time period
+            old_users = set(d_old.user_id.unique())
+
+            # isolate the users that have been active in the
+            # current time period, i.e. dt_n <= dt <= curr_dt
+            curr_users = set(d.user_id.unique())
+
+            # calculate curr users that are not in old_users
+            ret_count.append(len(curr_users & old_users))
+            dates.append(curr_dt)
+
+            curr_dt += timedelta(days=1)
+
+        print('\n')
+
+        # create plot object
+        plotObj = PlotObject(dates,
+                             ret_count,
+                             label='Returning Users',
+                             style='b.-')
+        return plotObj
+
+
+    def plot(self, plotObjs_ax1, filename, plotObjs_ax2=[], **kwargs):
+        """
+        Creates a figure give plot objects
+        plotObjs: list of plot object instances
+        filename: output name for figure *.png
+        **kwargs: matplotlib plt args, e.g. xlabel, ylabel, title, etc
+        """
+
+        # create figure of these data
+        print('\n--> making figure...')
+        fig = plt.figure(figsize=(12, 9))
         plt.xticks(rotation=45)
-        plt.subplots_adjust(bottom=0.15)
-        plt.ylabel('Number of Total Users')
-        plt.xlabel('Account Creation Date')
-        plt.title('Users Active in last 90 Days')
-        plt.plot(dfm.index, dfm,
-                 color='b', linestyle='-')
-        outpath = os.path.join(self.workingdir, "users-new.png")
-        plt.savefig(outpath)
+        plt.subplots_adjust(bottom=0.25)
+        ax = plt.axes()
 
+        # set plot attributes
+        for k, v in kwargs.items():
+            getattr(ax, 'set_'+k)(v)
+
+        for pobj in plotObjs_ax1:
+            ax.plot(pobj.x, pobj.y, pobj.style, label=pobj.label)
+
+        if len(plotObjs_ax2) > 0:
+            ax2 = ax.twinx()
+            for pobj in plotObjs_ax2:
+                ax2.plot(pobj.x, pobj.y, pobj.style, label=pobj.label)
+
+        # add a legend
+        plt.legend()
+
+        # add monthly minor ticks
+        months = mdates.MonthLocator()
+        ax.xaxis.set_minor_locator(months)
+
+        # save the figure and the data
+        print('--> saving figure ...')
+        outpath = os.path.join(self.workingdir, filename)
+        print(' --> %s' % outpath)
+        plt.savefig(outpath)
