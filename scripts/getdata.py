@@ -6,7 +6,6 @@ import elastic
 from datetime import datetime
 
 
-
 def get_stats_data(users=True, resources=True, activity=True, dirname='.'):
 
     # standard query parameters
@@ -20,19 +19,12 @@ def get_stats_data(users=True, resources=True, activity=True, dirname='.'):
     rindex = '*resource*latest*'
     aindex = '*activity*'
     aquery = '-user_id:None AND -action:visit'
-#    aquery = '-user_id:None'
-
-#    # clean old files
-#    for p in [ufile, rfile, cfile]:
-#        if os.path.exists(p):
-#            print('--> removing %s' % p)
-#            os.remove(p)
 
     # get user data
     if users:
         print('--> downloading user metrics')
         elastic.get_es_data(host, port, uindex, outpik=ufile)
-    else: 
+    else:
         ufile = ''
 
     # get resource data
