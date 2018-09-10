@@ -3,6 +3,7 @@
 import os
 import csv
 import pandas
+import argparse
 import numpy as np
 from tabulate import tabulate
 from datetime import datetime, timedelta
@@ -380,8 +381,12 @@ class Users(object):
 
         plts.append(self.get_new_users(dfu))
 
-        minx = dfu.user_id.nunique().index.min()
-        maxx = dfu.user_id.nunique().index.max()
+#        import pdb; pdb.set_trace()
+#        minx = dfu.user_id.nunique().index.min()
+#        maxx = dfu.user_id.nunique().index.max()
+
+        minx = dfu.date.min()
+        maxx = dfu.date.max()
         self.plot(plts,
                   'hs-all-user-overview',
                   **dict(title='HydroShare Users',
@@ -590,3 +595,53 @@ class Users(object):
         outpath = os.path.join(self.workingdir, filename)
         print(' --> %s' % outpath)
         plt.savefig(outpath)
+
+
+if __name__ == "__main__":
+
+    parser = argparse.ArgumentParser(description='general user statistics')
+    parser.add_argument('--working-dir', help='path to directory containing elasticsearch data',
+            required=True)
+    parser.add_argument('--out-xlsx', help='path to output xlsx file', default='stats.xlsx')
+    parser.add_argument('--st', help='start time MM-DD-YYYY', default='01-01-2000')
+    parser.add_argument('--et', help='start time MM-DD-YYYY', default=datetime.now().strftime('%m-%d-%Y'))
+    args = parser.parse_args()
+
+    # check date formats
+    st_str = args.st
+    et_str = args.et
+
+    try:
+        st = datetime.strptime(st_str, '%m-%d-%Y')
+    except ValueError:
+        st = datetime.strptime('01-01-2000', '%m-%d-%Y')
+        print('\tincorrect start date format, using default start date: 01-01-2000')
+    try:
+        et = datetime.strptime(et_str, '%m-%d-%Y')
+    except ValueError:
+        et = datetime.now()
+        print('\tincorrect end date format, using default start date: %s' % et.strftime('%m-%d-%Y'))
+
+    # save user data, check that pickle files exist before saving
+    if not os.path.exists(os.path.join(args.working_dir, 'activity.pkl')):
+        print('\n\tcould not find \'activity.pkl\', skipping.'
+              '\n\trun \'collect_hs_data\' to retrieve these missing data')
+    else:
+        print('Running <User> Statistics Using:')
+        print('Working Directory: %s' % args.working_dir)
+        print('Out Xlsx: %s' % args.out_xlsx)
+        print('Start Date: %s' % str(st))
+        print('End Date: %s' % str(et))
+
+        # generate statistics
+        user = Users(args.working_dir, args.out_xlsx, st, et)
+        user.user_stats()
+        user.generate_user_overview()
+
+
+
+
+
+
+
+

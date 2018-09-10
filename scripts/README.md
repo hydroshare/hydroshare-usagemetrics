@@ -44,7 +44,23 @@ It is recommended to use a Python 3 virtual environment, e.g. anaconda.  The fol
 
 ### Generating Reports  
 
-#### 1. Working with the CMS
+#### 1. Basic Usage
+
+1. Collect Data
+
+    ```
+    $/.getdata.py
+    ```
+
+This operation performs the following tasks:
+ - creates a date-stamped folder for output data
+ - collects data from the HydroShare elasticsearch database
+ - saves resource, users, and activity data as serialized pandas dataframes (\*.pkl) and comma separated files.
+
+2. Deriving Standard User Metrics
+
+
+#### 2. Working with the CMS
 
 - With an activate python environment, launch the CUAHSI Metrics Shell (CMS)
 

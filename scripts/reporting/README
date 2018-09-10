@@ -1,0 +1,4 @@
+
+1. ./collect_data.py 
+
+2. ./users.py <date-folder> <flags>
