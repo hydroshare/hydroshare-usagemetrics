@@ -3,10 +3,11 @@
 import os
 import pandas
 import argparse
+import numpy as np
 from datetime import datetime
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
-
+import matplotlib.ticker as ticker
 
 class PlotObject(object):
     def __init__(self, x, y, label='', style='b-', type='line'):
@@ -15,6 +16,11 @@ class PlotObject(object):
         self.label = label
         self.style = style
         self.type = type
+
+    def get_dataframe(self):
+        df = pandas.DataFrame(self.y, index=self.x, columns=[self.label])
+        df.index = pandas.to_datetime(df.index)
+        return df
 
 
 def load_data(workingdir):
@@ -104,26 +110,19 @@ def plot(plotObjs_ax1, filename, plotObjs_ax2=[], *args, **kwargs):
     for k, v in kwargs.items():
         getattr(ax, 'set_'+k)(v)
 
-    for pobj in plotObjs_ax1:
-        if pobj.type == 'line':
-            ax.plot(pobj.x, pobj.y, pobj.style, label=pobj.label)
-        elif pobj.type == 'bar':
-            ax.bar(pobj.x, pobj.y, 10, label=pobj.label)
+    df = pandas.concat([d.get_dataframe() for d in plotObjs_ax1],
+                       axis=1).fillna(0)
+    df.plot.bar(ax=ax)
+    ax.set_xlabel('Account Creation Date')
 
-    if len(plotObjs_ax2) > 0:
-        ax2 = ax.twinx()
-        for pobj in plotObjs_ax2:
-            if pobj.type == 'line':
-                ax2.plot(pobj.x, pobj.y, pobj.style, label=pobj.label)
-            elif pobj.type == 'bar':
-                ax2.bar(pobj.x, pobj.y, 10, label=pobj.label)
+    # Make most of the ticklabels empty so the labels don't get too crowded
+    ticklabels = ['']*len(df.index)
+    ticklabels[::4] = [item.strftime('%Y - %m') for item in df.index[::4]]
+    ax.xaxis.set_major_formatter(ticker.FixedFormatter(ticklabels))
+    plt.gcf().autofmt_xdate()
 
     # add a legend
-    plt.legend()
-
-    # add monthly minor ticks
-    months = mdates.MonthLocator()
-    ax.xaxis.set_minor_locator(months)
+    plt.legend(loc=2)
 
     # save the figure and the data
     print('--> saving figure as %s' % filename)
@@ -146,9 +145,55 @@ def distinct_organizations(workingdir, st, et, label=''):
     # create plot object
     x = ds.index
     y = ds.values.tolist()
-    plot = PlotObject(x, y, label=label, type='bar')
+    return PlotObject(x, y, label=label, type='bar')
 
-    return [plot]
+
+def distinct_us_universities(workingdir, st, et, label=''):
+
+    print('--> calculating distinct US universities')
+
+    # load the data based on working directory and subset it if necessary
+    df = load_data(workingdir)
+    df = subset_by_date(df, st, et)
+
+    # load university data
+    uni = pandas.read_csv('dat/university-data.csv')
+    uni_us = list(uni[uni.country == 'us'].university)
+
+    df_us = df[df.usr_organization.isin(uni_us)]
+
+    # group and cumsum and create plot object for US
+    grp = '1M'
+    df_us = df_us.sort_index()
+    ds_us = df_us.groupby(pandas.TimeGrouper(grp)).usr_organization.nunique()
+    x = ds_us.index
+    y = ds_us.values.tolist()
+
+    return PlotObject(x, y, label=label, type='bar')
+
+
+def distinct_international_universities(workingdir, st, et, label=''):
+
+    print('--> calculating distinct international universities')
+
+    # load the data based on working directory and subset it if necessary
+    df = load_data(workingdir)
+    df = subset_by_date(df, st, et)
+
+    # load university data
+    uni = pandas.read_csv('dat/university-data.csv')
+    uni_int = list(uni[uni.country != 'us'].university)
+
+    df_int = df[df.usr_organization.isin(uni_int)]
+
+    # group and cumsum and create plot object for International
+    grp = '1M'
+    df_int = df_int.sort_index()
+    ds_int = df_int.groupby(pandas.TimeGrouper(grp)).usr_organization.nunique()
+    x = ds_int.index
+    y = ds_int.values.tolist()
+
+    return PlotObject(x, y, label=label, type='bar')
 
 
 if __name__ == "__main__":
@@ -164,20 +209,57 @@ if __name__ == "__main__":
     parser.add_argument('--et',
                         help='reporting end date MM-DD-YYYY',
                         default=datetime.now().strftime('%m-%d-%Y'))
-    parser.add_argument('-d',
-                        help='plot distinct organization',
+    parser.add_argument('--title',
+                        help='title for the output figure',
+                        default='Distinct HydroShare Organizations')
+    parser.add_argument('--filename',
+                        help='filename for the output figure',
+                        default='organizations.png')
+    parser.add_argument('-a',
+                        help='plot all distinct organizations',
+                        action='store_true')
+    parser.add_argument('-u',
+                        help='plot distinct US organizations',
+                        action='store_true')
+    parser.add_argument('-i',
+                        help='plot distinct international organizations',
                         action='store_true')
     args = parser.parse_args()
 
     st, et = validate_inputs(args.working_dir, args.st, args.et)
 
-    if args.d:
-        plots = distinct_organizations(args.working_dir, st, et)
-        plot(plots, os.path.join(args.working_dir,
-                                 'hydroshare_distinct_organizations.png'),
-             title='Distinct User Organizations',
+    plots = []
+    if args.a:
+        plots.append(distinct_organizations(args.working_dir,
+                                            st,
+                                            et,
+                                            'All Organizations'))
+    if args.u:
+        plots.append(distinct_us_universities(args.working_dir,
+                                              st,
+                                              et,
+                                              'US Institutions'))
+    if args.i:
+        plots.append(distinct_international_universities(args.working_dir,
+                                                         st,
+                                                         et,
+                                                         'International'
+                                                         ' Institutions'))
+
+    if len(plots) > 0:
+        plot(plots,
+             os.path.join(args.working_dir, args.filename),
+             title=args.title,
              ylabel='Number of Organizations',
-             xlabel='User Account Creation Date')
+             xlabel='Account Creation Date')
+
+#    if args.t:
+#        plots = distinct_organizations_by_type(args.working_dir, st, et)
+#        plot(plots, os.path.join(args.working_dir,
+#                                 'hydroshare_distinct_organizations_type.png'),
+#             title='Distinct User Organizations by Type',
+#             ylabel='Number of Organizations',
+#             xlabel='User Account Creation Date')
 
 
 
