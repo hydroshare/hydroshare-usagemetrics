@@ -129,7 +129,7 @@ def plot(plotObjs_ax1, filename, plotObjs_ax2=[], *args, **kwargs):
     plt.savefig(filename)
 
 
-def distinct_organizations(workingdir, st, et, label=''):
+def distinct_organizations(workingdir, st, et, label='', agg='1M'):
 
     print('--> calculating distinct organizations')
 
@@ -139,7 +139,7 @@ def distinct_organizations(workingdir, st, et, label=''):
 
     # group and cumsum
     df = df.sort_index()
-    grp = '1M'
+    grp = agg
     ds = df.groupby(pandas.TimeGrouper(grp)).usr_organization.nunique()
 
     # create plot object
@@ -148,7 +148,7 @@ def distinct_organizations(workingdir, st, et, label=''):
     return PlotObject(x, y, label=label, type='bar')
 
 
-def distinct_us_universities(workingdir, st, et, label=''):
+def distinct_us_universities(workingdir, st, et, label='', agg='1M'):
 
     print('--> calculating distinct US universities')
 
@@ -163,7 +163,7 @@ def distinct_us_universities(workingdir, st, et, label=''):
     df_us = df[df.usr_organization.isin(uni_us)]
 
     # group and cumsum and create plot object for US
-    grp = '1M'
+    grp = agg
     df_us = df_us.sort_index()
     ds_us = df_us.groupby(pandas.TimeGrouper(grp)).usr_organization.nunique()
     x = ds_us.index
@@ -172,7 +172,7 @@ def distinct_us_universities(workingdir, st, et, label=''):
     return PlotObject(x, y, label=label, type='bar')
 
 
-def distinct_international_universities(workingdir, st, et, label=''):
+def distinct_international_universities(workingdir, st, et, label='', agg='1M'):
 
     print('--> calculating distinct international universities')
 
@@ -187,7 +187,7 @@ def distinct_international_universities(workingdir, st, et, label=''):
     df_int = df[df.usr_organization.isin(uni_int)]
 
     # group and cumsum and create plot object for International
-    grp = '1M'
+    grp = agg
     df_int = df_int.sort_index()
     ds_int = df_int.groupby(pandas.TimeGrouper(grp)).usr_organization.nunique()
     x = ds_int.index
@@ -195,6 +195,29 @@ def distinct_international_universities(workingdir, st, et, label=''):
 
     return PlotObject(x, y, label=label, type='bar')
 
+
+def distinct_cuahsi_members(workingdir, st, et, label='', agg='1M'):
+
+    print('--> calculating CUAHSI members')
+
+    # load the data based on working directory and subset it if necessary
+    df = load_data(workingdir)
+    df = subset_by_date(df, st, et)
+
+    # load cuahsi member data
+    mem = pandas.read_csv('dat/cuahsi-members.csv')
+    mems = list(mem.name)
+
+    df_mem = df[df.usr_organization.isin(mems)]
+
+    # group and cumsum and create plot object for CUAHSI members
+    grp = agg
+    df_mem = df_mem.sort_index()
+    ds_mem = df_mem.groupby(pandas.TimeGrouper(grp)).usr_organization.nunique()
+    x = ds_mem.index
+    y = ds_mem.values.tolist()
+
+    return PlotObject(x, y, label=label, type='bar')
 
 if __name__ == "__main__":
 
@@ -215,6 +238,9 @@ if __name__ == "__main__":
     parser.add_argument('--filename',
                         help='filename for the output figure',
                         default='organizations.png')
+    parser.add_argument('--agg',
+                        help='data aggregation (e.g. D, M, Y, #D, #M, #Y)',
+                        default='1M')
     parser.add_argument('-a',
                         help='plot all distinct organizations',
                         action='store_true')
@@ -223,6 +249,9 @@ if __name__ == "__main__":
                         action='store_true')
     parser.add_argument('-i',
                         help='plot distinct international organizations',
+                        action='store_true')
+    parser.add_argument('-c',
+                        help='plot distinct cuahsi members',
                         action='store_true')
     args = parser.parse_args()
 
@@ -233,18 +262,27 @@ if __name__ == "__main__":
         plots.append(distinct_organizations(args.working_dir,
                                             st,
                                             et,
-                                            'All Organizations'))
+                                            'All Organizations',
+                                            args.agg))
     if args.u:
         plots.append(distinct_us_universities(args.working_dir,
                                               st,
                                               et,
-                                              'US Institutions'))
+                                              'US Institutions',
+                                              args.agg))
     if args.i:
         plots.append(distinct_international_universities(args.working_dir,
                                                          st,
                                                          et,
                                                          'International'
-                                                         ' Institutions'))
+                                                         ' Institutions',
+                                                         args.agg))
+    if args.c:
+        plots.append(distinct_cuahsi_members(args.working_dir,
+                                             st,
+                                             et,
+                                             'CUAHSI Member Institutions',
+                                             args.agg))
 
     if len(plots) > 0:
         plot(plots,
