@@ -276,15 +276,15 @@ if __name__ == "__main__":
         et = datetime.now()
         print('\tincorrect end date format, using default start date: %s' % et.strftime('%m-%d-%Y'))
 
-    ######### check that dat exist #########
+    # check that dat exist
     if not os.path.exists(os.path.join(args.working_dir, 'activity.pkl')):
         print('\n\tcould not find \'activity.pkl\', skipping.'
               '\n\trun \'collect_hs_data\' to retrieve these missing data')
     else:
+        # cast input strings to integers
         step = int(args.step)
         activedays = int(args.active_range)
 
-        ######### Generate Statistics #########
         plots = []
         if args.t:
             res = total_users(args.working_dir, st, et,
@@ -302,18 +302,8 @@ if __name__ == "__main__":
             res = returning_users(args.working_dir, st, et,
                                   activedays, step)
             plots.append(res)
-
-        plot(plots, os.path.join(args.working_dir, 'hydroshare_users.png'),
-             title=args.figure_title,
-             ylabel='Number of Users',
-             xlabel='Date')
-
-    print('Script Complete')
-
-
-
-
-
-
-
-
+        if len(plots) > 0:
+            plot(plots, os.path.join(args.working_dir, 'hydroshare_users.png'),
+                 title=args.figure_title,
+                 ylabel='Number of Users',
+                 xlabel='Date')

@@ -102,6 +102,8 @@ def user_types_pie_chart(working_dir, st, et, drop_cols,
     df = df.set_index('type')
     df['percent'] = round(df['score']/df['score'].sum()*100, 2)
 
+    print('--> total number of users reporting: %d' % df.score.sum())
+
     for u in user_types:
         if u not in drop_cols:
             pct = df.loc[u].percent
