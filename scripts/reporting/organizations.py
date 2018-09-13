@@ -270,6 +270,12 @@ if __name__ == "__main__":
                                               et,
                                               'US Institutions',
                                               args.agg))
+    if args.c:
+        plots.append(distinct_cuahsi_members(args.working_dir,
+                                             st,
+                                             et,
+                                             'CUAHSI Member Institutions',
+                                             args.agg))
     if args.i:
         plots.append(distinct_international_universities(args.working_dir,
                                                          st,
@@ -277,12 +283,6 @@ if __name__ == "__main__":
                                                          'International'
                                                          ' Institutions',
                                                          args.agg))
-    if args.c:
-        plots.append(distinct_cuahsi_members(args.working_dir,
-                                             st,
-                                             et,
-                                             'CUAHSI Member Institutions',
-                                             args.agg))
 
     if len(plots) > 0:
         plot(plots,

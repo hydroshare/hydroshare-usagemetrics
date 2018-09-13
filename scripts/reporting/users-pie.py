@@ -88,10 +88,12 @@ def user_types_pie_chart(working_dir, st, et, drop_cols,
     # remove 'usr_type' b/c it's no longer needed
     df = df.drop('usr_type', axis=1)
 
-
     # remove specified columns so they won't be plotted
+    unreported_users = 0
     for drp in drop_cols:
         try:
+            print('--> not reporting %s: %s users'
+                  % (drp, df[drp].sum()))
             df.drop(drp, inplace=True, axis=1)
         except:
             pass
