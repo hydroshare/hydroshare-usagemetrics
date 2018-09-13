@@ -291,14 +291,5 @@ if __name__ == "__main__":
              ylabel='Number of Organizations',
              xlabel='Account Creation Date')
 
-#    if args.t:
-#        plots = distinct_organizations_by_type(args.working_dir, st, et)
-#        plot(plots, os.path.join(args.working_dir,
-#                                 'hydroshare_distinct_organizations_type.png'),
-#             title='Distinct User Organizations by Type',
-#             ylabel='Number of Organizations',
-#             xlabel='User Account Creation Date')
-
-
 
 

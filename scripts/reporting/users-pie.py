@@ -124,7 +124,8 @@ def user_types_pie_chart(working_dir, st, et, drop_cols,
 
     # save the figure and the data
     print('--> saving figure as %s' % filename)
-    plt.savefig(filename, bbox_inches="tight")
+    outpath = os.path.join(working_dir, filename)
+    plt.savefig(outpath, bbox_inches="tight")
 
 
 if __name__ == "__main__":
