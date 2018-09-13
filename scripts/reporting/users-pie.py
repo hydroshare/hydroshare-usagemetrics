@@ -1,15 +1,10 @@
 #!/usr/bin/env python3 
 
 import os
-import csv
 import pandas
 import argparse
 import numpy as np
-from tabulate import tabulate
-from datetime import datetime, timedelta
-from collections import OrderedDict
 import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
 
 
 def load_data(workingdir):
@@ -38,6 +33,7 @@ def load_data(workingdir):
     df.set_index(['Date'], inplace=True)
 
     return df
+
 
 def subset_by_date(dat, st, et):
 
