@@ -242,6 +242,9 @@ if __name__ == "__main__":
                         help='title for the output figure',
                         default='HydroShare User Summary %s' \
                         % datetime.now().strftime('%m-%d-%Y') )
+    parser.add_argument('--filename',
+                        help='filename for the output figure',
+                        default='hydroshare-users.png')
     parser.add_argument('--st',
                         help='start time MM-DD-YYYY',
                         default='01-01-2000')
@@ -303,7 +306,7 @@ if __name__ == "__main__":
                                   activedays, step)
             plots.append(res)
         if len(plots) > 0:
-            plot(plots, os.path.join(args.working_dir, 'hydroshare_users.png'),
+            plot(plots, os.path.join(args.working_dir, args.filename),
                  title=args.figure_title,
                  ylabel='Number of Users',
                  xlabel='Date')

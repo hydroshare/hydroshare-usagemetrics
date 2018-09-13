@@ -41,30 +41,30 @@ Generate HydroShare user plots via `users.py`. See help documentation:
 
 ### 2.1 Create HydroShare Users Overview (active = 30 days)
 
-    $ ./users.py --working-dir=09.13.2018 --active-range=30 -tan 
+    $ ./users.py --working-dir=09.13.2018 --active-range=30 filename=hs-users-all-30.png -tan 
     --> calculating total users
     --> calculating active users
     --> calculating new users
     --> making figure...
-    --> saving figure as 09.13.2018/hydroshare_users.png
+    --> saving figure as 09.13.2018/hs-users-all-30.png
 
 ### 2.2 Create HydroShare Users Overview (active = 180 days)
 
-    $ ./users.py --working-dir=09.13.2018 --active-range=180 -tan 
+    $ ./users.py --working-dir=09.13.2018 --active-range=180 filename=hs-users-all-180.png -tan 
     --> calculating total users
     --> calculating active users
     --> calculating new users
     --> making figure...
-    --> saving figure as 09.13.2018/hydroshare_users.png
+    --> saving figure as 09.13.2018/hs-users-all-180.png
 
 ### 2.3 Create HydroShare Active Users Overview (active = 180 days)
     
-    $ ./users.py --working-dir=09.13.2018 --active-range=180 -anr 
+    $ ./users.py --working-dir=09.13.2018 --active-range=180 filename=hs-users-active-180.png -anr 
     --> calculating active users
     --> calculating new users
     --> calculating returning users
     --> making figure...
-    --> saving figure as 09.13.2018/hydroshare_users.png
+    --> saving figure as 09.13.2018/hs-users-all-30.png
 
 
 
