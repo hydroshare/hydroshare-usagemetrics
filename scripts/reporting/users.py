@@ -229,9 +229,6 @@ if __name__ == "__main__":
     parser.add_argument('--working-dir',
                         help='path to directory containing elasticsearch data',
                         required=True)
-    parser.add_argument('--out-xlsx',
-                        help='path to output xlsx file',
-                        default='stats.xlsx')
     parser.add_argument('--step',
                         help='timestep to use in aggregation in days',
                         default=7)

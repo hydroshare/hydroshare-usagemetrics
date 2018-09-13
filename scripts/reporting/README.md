@@ -17,27 +17,28 @@ Collect metric data from elasticseach. This will create a working directory for 
 Generate HydroShare user plots via `users.py`. See help documentation:
 
     $ ./users.py --help
-    usage: users.py [-h] --working-dir WORKING_DIR [--out-xlsx OUT_XLSX]
-                [--step STEP] [--active-range ACTIVE_RANGE]
-                [--figure-title FIGURE_TITLE] [--st ST] [--et ET] [-t] [-a]
-                [-n] [-r]
-
+    usage: users.py [-h] --working-dir WORKING_DIR [--step STEP]
+                    [--active-range ACTIVE_RANGE] [--figure-title FIGURE_TITLE]
+                    [--filename FILENAME] [--st ST] [--et ET] [-t] [-a] [-n] [-r]
+    
+    
     optional arguments:
       -h, --help            show this help message and exit
       --working-dir WORKING_DIR
                             path to directory containing elasticsearch data
-      --out-xlsx OUT_XLSX   path to output xlsx file
       --step STEP           timestep to use in aggregation in days
       --active-range ACTIVE_RANGE
                             number of days that qualify a user as active
       --figure-title FIGURE_TITLE
                             title for the output figure
+      --filename FILENAME   filename for the output figure
       --st ST               start time MM-DD-YYYY
       --et ET               start time MM-DD-YYYY
       -t                    plot total users line
       -a                    plot active users line
       -n                    plot new users line
       -r                    plot returning users line
+
 
 ### 2.1 Create HydroShare Users Overview (active = 30 days)
 
@@ -101,7 +102,7 @@ Generate HydroShare organization plots via `organizations.py`. See help document
 ### 3.2 Plot Summary of US, International, and CUAHSI Member Organizations
 
 
-    ./organizations.py --working-dir=09.13.2018 --agg=3M --filename="hs_us_int_cuahsi_organizations.png" -uic
+    $ ./organizations.py --working-dir=09.13.2018 --agg=3M --filename="hs_us_int_cuahsi_organizations.png" -uic
     --> calculating distinct US universities
     --> calculating CUAHSI members
     --> calculating distinct international universities
@@ -132,7 +133,7 @@ Generate HydroShare user type plots using `users-pie.py`:
      
 ### 4.1 Plot Pie Chart of Users by Type
 
-    ./users-pie.py --working-dir=09.13.2018 --filename=hs_users_minus_other_and_unspecified.png --exclude=Other,Unspecified -p
+    $ ./users-pie.py --working-dir=09.13.2018 --filename=hs_users_minus_other_and_unspecified.png --exclude=Other,Unspecified -p
     --> building user types pie-chart
     --> not reporting Other: 817 users
     --> not reporting Unspecified: 1887 users
