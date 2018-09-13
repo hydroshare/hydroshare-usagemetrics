@@ -1,13 +1,10 @@
 #!/usr/bin/env python3 
 
 import os
-import csv
 import pandas
 import argparse
 import numpy as np
-from tabulate import tabulate
 from datetime import datetime, timedelta
-from collections import OrderedDict
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
@@ -46,6 +43,7 @@ def load_data(workingdir):
     df.set_index(['Date'], inplace=True)
 
     return df
+
 
 def subset_by_date(dat, st, et):
 
@@ -114,6 +112,7 @@ def active_users(working_dir, st, et, activerange, step):
 
     return plot
 
+
 def new_users(working_dir, st, et, activerange, step):
 
     # load the data based on working directory
@@ -145,6 +144,7 @@ def new_users(working_dir, st, et, activerange, step):
     plot = PlotObject(x, y, label='new users', style='g-')
 
     return plot
+
 
 def returning_users(working_dir, st, et, activerange, step):
 
@@ -181,7 +181,6 @@ def returning_users(working_dir, st, et, activerange, step):
     plot = PlotObject(x, y, label='returning users', style='r-')
 
     return plot
-
 
 
 def plot(plotObjs_ax1, filename, plotObjs_ax2=[], **kwargs):
