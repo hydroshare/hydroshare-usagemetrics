@@ -20,7 +20,6 @@ class PlotObject(object):
 def load_data(workingdir, pickle_file='users.pkl'):
 
     # load the activity data
-    print('--> reading data...')
     path = os.path.join(workingdir, pickle_file)
     df = pandas.read_pickle(path)
 
@@ -89,12 +88,13 @@ def total_users(working_dir, st, et, step):
 
     # load the data based on working directory
     df = load_data(working_dir)
-    df = subset_by_date(df, st, et)
 
     # group and cumsum
     df = df.sort_index()
     grp = '%dd' % step
     ds = df.groupby(pandas.TimeGrouper(grp)).count().usr_id.cumsum()
+
+    ds = subset_by_date(ds, st, et)
 
     # create plot object
     x = ds.index
@@ -118,19 +118,33 @@ def active_users(working_dir, st, et, activerange, step):
     df = subset_by_date(df, st, et)
     df = df.sort_index()
 
+    dfu = load_data(working_dir, 'users.pkl')
+    dfu = subset_by_date(dfu, st, et)
+
     x, y = [], []
     t = df.date.min()
     while t < et:
 
         min_active_date = t - timedelta(days=activerange)
-        # subset all users to those that exist up to the current time, t
+
+        # isolate users that performed an action
         subdf = df[(df.date <= t) &
                    (df.date > min_active_date)]
-        unique_users_count = subdf.user_id.nunique()
+        unique_active_users = subdf.user_id.unique()
+
+        # isolate new users (this is necessary to more accurately determine
+        # the initial count of active users since activity does not span 
+        # the full record of user accounts
+        subdfu = dfu[(dfu.usr_created_date <= t) &
+                     (dfu.usr_created_date > min_active_date)]
+        unique_new_users = subdfu.usr_id.unique()
+
+        total_active_users = len(set(list(unique_new_users) +
+                                     list(unique_active_users)))
 
         # save the results
         x.append(t)
-        y.append(unique_users_count)
+        y.append(total_active_users)
 
         t += timedelta(days=step)
 
