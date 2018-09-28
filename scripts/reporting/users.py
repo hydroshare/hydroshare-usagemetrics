@@ -122,7 +122,10 @@ def active_users(working_dir, st, et, activerange, step):
     dfu = subset_by_date(dfu, st, et)
 
     x, y = [], []
-    t = df.date.min()
+
+    # set the start date as the earliest available date plus the 
+    # active date range
+    t = df.date.min() + timedelta(days=activedays)
     while t < et:
 
         min_active_date = t - timedelta(days=activerange)
@@ -130,18 +133,18 @@ def active_users(working_dir, st, et, activerange, step):
         # isolate users that performed an action
         subdf = df[(df.date <= t) &
                    (df.date > min_active_date)]
-        unique_active_users = subdf.user_id.unique()
+        total_active_users = subdf.user_id.nunique()
 
-        # isolate new users (this is necessary to more accurately determine
-        # the initial count of active users since activity does not span 
-        # the full record of user accounts
-        subdfu = dfu[(dfu.usr_created_date <= t) &
-                     (dfu.usr_created_date > min_active_date)]
-        unique_new_users = subdfu.usr_id.unique()
-
-        total_active_users = len(set(list(unique_new_users) +
-                                     list(unique_active_users)))
-
+#        # isolate new users (this is necessary to more accurately determine
+#        # the initial count of active users since activity does not span 
+#        # the full record of user accounts
+#        subdfu = dfu[(dfu.usr_created_date <= t) &
+#                     (dfu.usr_created_date > min_active_date)]
+#        unique_new_users = subdfu.usr_id.unique()
+#
+#        total_active_users = len(set(list(unique_new_users) +
+#                                     list(unique_active_users)))
+        
         # save the results
         x.append(t)
         y.append(total_active_users)
@@ -167,18 +170,25 @@ def new_users(working_dir, st, et, activerange, step):
 
     t = df['usr_created_date'].min()
     while t < et:
-        # save the current date
-        x.append(t)
-
-        # subset all users to those that exist up to the current time, t
-        subdf = df[df.usr_created_date <= t]
-
-        # The number of new users in activerange up to time dateJoined[i] (i.e. the range 1:i) are users who 
-        # created their account after dateJoine[i]-activerange
+        
         earliest_date = t - timedelta(days=activerange)
-        y.append(np.where((subdf.usr_created_date >= earliest_date) &
-                                            (subdf.usr_created_date <= t),
-                                            1, 0).sum())
+
+#        # subset all users to those that exist up to the current time, t
+#        subdf = df[df.usr_created_date <= t]
+#
+#        # The number of new users in activerange up to time dateJoined[i] (i.e. the range 1:i) are users who 
+#        # created their account after dateJoine[i]-activerange
+#        earliest_date = t - timedelta(days=activerange)
+#        y.append(np.where((subdf.usr_created_date >= earliest_date) &
+#                                            (subdf.usr_created_date <= t),
+#                                            1, 0).sum())
+
+        subdfn = df[(df.usr_created_date <= t) &
+                    (df.usr_created_date > earliest_date)]
+        new = subdfn.usr_id.nunique()
+        
+        y.append(new)
+        x.append(t)
 
         t += timedelta(days=step)
 
@@ -200,17 +210,19 @@ def returning_users(working_dir, st, et, activerange, step):
     x = []
     y = []
 
-    t = df['usr_created_date'].min()
+    # set the start date as the earliest available date plus the 
+    # active date range
+    t = dfa.date.min() + timedelta(days=activedays)
+    n, a = [],[]
     while t < et:
-        # save the current date
-        x.append(t)
-
-        # subset all users to those that exist up to the current time, t
-        subdf = df[df.usr_created_date <= t]
-
         earliest_date = t - timedelta(days=activerange)
-        new = np.where((subdf.usr_created_date >= earliest_date) &
-                       (subdf.usr_created_date <= t), 1, 0).sum()
+
+        ## subset all users to those that exist up to the current time, t
+        #subdf = df[df.usr_created_date <= t]
+
+        subdfn = df[(df.usr_created_date <= t) &
+                    (df.usr_created_date > earliest_date)]
+        new = subdfn.usr_id.nunique()
 
         # calculate active users for this range
         subdfa = dfa[(dfa.date <= t) &
@@ -221,12 +233,12 @@ def returning_users(working_dir, st, et, activerange, step):
         # active period are users who continue to return to and work
         # with HydroShare.
         y.append(active - new)
+        x.append(t)
 
         t += timedelta(days=step)
 
     # create plot object
     plot = PlotObject(x, y, label='returning users', style='r-')
-
     return plot
 
 
@@ -277,7 +289,7 @@ if __name__ == "__main__":
                         required=True)
     parser.add_argument('--step',
                         help='timestep to use in aggregation in days',
-                        default=7)
+                        default=10)
     parser.add_argument('--active-range',
                         help='number of days that qualify a user as active',
                         default=90)
