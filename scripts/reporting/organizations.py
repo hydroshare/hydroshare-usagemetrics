@@ -3,11 +3,10 @@
 import os
 import pandas
 import argparse
-import numpy as np
 from datetime import datetime
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
-import matplotlib.ticker as ticker
+
 
 class PlotObject(object):
     def __init__(self, x, y, label='', style='b-', type='line'):
@@ -25,7 +24,7 @@ class PlotObject(object):
 
 def load_data(workingdir):
 
-    # load the activity data
+    # load the data
     path = os.path.join(workingdir, 'users.pkl')
     df = pandas.read_pickle(path)
 
@@ -70,22 +69,23 @@ def subset_by_date(dat, st, et):
 
 def validate_inputs(working_dir, st, et):
 
-    ######### check date formats #########
+    # check date formats 
     try:
         st = datetime.strptime(st, '%m-%d-%Y')
     except ValueError:
         st = datetime.strptime('01-01-2000', '%m-%d-%Y')
-        print('\tincorrect start date format, using default start date: 01-01-2000')
+        print('\tincorrect start date format, using default start date: '
+              '01-01-2000')
     try:
         et = datetime.strptime(et, '%m-%d-%Y')
     except ValueError:
         et = datetime.now()
-        print('\tincorrect end date format, using default start date: %s' % et.strftime('%m-%d-%Y'))
+        print('\tincorrect end date format, using default start date: %s'
+              % et.strftime('%m-%d-%Y'))
 
-
-    ######### check that dat exist #########
-    if not os.path.exists(os.path.join(working_dir, 'activity.pkl')):
-        print('\n\tcould not find \'activity.pkl\', skipping.'
+    # check that dat exist 
+    if not os.path.exists(os.path.join(working_dir, 'users.pkl')):
+        print('\n\tcould not find \'users.pkl\', skipping.'
               '\n\trun \'collect_hs_data\' to retrieve these missing data')
 
     return st, et
@@ -112,17 +112,17 @@ def plot(plotObjs_ax1, filename, plotObjs_ax2=[], *args, **kwargs):
 
     df = pandas.concat([d.get_dataframe() for d in plotObjs_ax1],
                        axis=1).fillna(0)
-    df.plot.bar(ax=ax)
+
+    for pobj in plotObjs_ax1:
+        ax.plot(pobj.x, pobj.y, pobj.style, label=pobj.label)
     ax.set_xlabel('Account Creation Date')
 
-    # Make most of the ticklabels empty so the labels don't get too crowded
-    ticklabels = ['']*len(df.index)
-    ticklabels[::4] = [item.strftime('%Y - %m') for item in df.index[::4]]
-    ax.xaxis.set_major_formatter(ticker.FixedFormatter(ticklabels))
-    plt.gcf().autofmt_xdate()
-
     # add a legend
-    plt.legend(loc=2)
+    plt.legend()
+
+    # add monthly minor ticks
+    months = mdates.MonthLocator()
+    ax.xaxis.set_minor_locator(months)
 
     # save the figure and the data
     print('--> saving figure as %s' % filename)
@@ -137,15 +137,19 @@ def distinct_organizations(workingdir, st, et, label='', agg='1M'):
     df = load_data(workingdir)
     df = subset_by_date(df, st, et)
 
+    # drop duplicates (except the first occurrence)
+    df = df.drop_duplicates(subset='usr_organization', keep='first')
+
     # group and cumsum
     df = df.sort_index()
     grp = agg
-    ds = df.groupby(pandas.TimeGrouper(grp)).usr_organization.nunique()
+    ds = df.groupby(pandas.TimeGrouper(grp)) \
+           .usr_organization.nunique().cumsum()
 
     # create plot object
     x = ds.index
     y = ds.values.tolist()
-    return PlotObject(x, y, label=label, type='bar')
+    return PlotObject(x, y, label=label, style='k-')
 
 
 def distinct_us_universities(workingdir, st, et, label='', agg='1M'):
@@ -156,20 +160,25 @@ def distinct_us_universities(workingdir, st, et, label='', agg='1M'):
     df = load_data(workingdir)
     df = subset_by_date(df, st, et)
 
+    # drop duplicates (except the first occurrence)
+    df = df.drop_duplicates(subset='usr_organization', keep='first')
+
     # load university data
     uni = pandas.read_csv('dat/university-data.csv')
     uni_us = list(uni[uni.country == 'us'].university)
 
+    # subset all organizations to just the approved list of US orgs
     df_us = df[df.usr_organization.isin(uni_us)]
 
-    # group and cumsum and create plot object for US
+    # group, cumulative sum, and create plot object
     grp = agg
     df_us = df_us.sort_index()
-    ds_us = df_us.groupby(pandas.TimeGrouper(grp)).usr_organization.nunique()
+    ds_us = df_us.groupby(pandas.TimeGrouper(grp)) \
+                 .usr_organization.nunique().cumsum()
     x = ds_us.index
     y = ds_us.values.tolist()
 
-    return PlotObject(x, y, label=label, type='bar')
+    return PlotObject(x, y, label=label, style='b-')
 
 
 def distinct_international_universities(workingdir, st, et, label='', agg='1M'):
@@ -180,20 +189,25 @@ def distinct_international_universities(workingdir, st, et, label='', agg='1M'):
     df = load_data(workingdir)
     df = subset_by_date(df, st, et)
 
+    # drop duplicates (except the first occurrence)
+    df = df.drop_duplicates(subset='usr_organization', keep='first')
+
     # load university data
     uni = pandas.read_csv('dat/university-data.csv')
     uni_int = list(uni[uni.country != 'us'].university)
 
+    # subset all organizations to just the approved list of international orgs
     df_int = df[df.usr_organization.isin(uni_int)]
 
-    # group and cumsum and create plot object for International
+    # group, cumulative sum, and create plot object
     grp = agg
     df_int = df_int.sort_index()
-    ds_int = df_int.groupby(pandas.TimeGrouper(grp)).usr_organization.nunique()
+    ds_int = df_int.groupby(pandas.TimeGrouper(grp)) \
+                   .usr_organization.nunique().cumsum()
     x = ds_int.index
     y = ds_int.values.tolist()
 
-    return PlotObject(x, y, label=label, type='bar')
+    return PlotObject(x, y, label=label, style='r-')
 
 
 def distinct_cuahsi_members(workingdir, st, et, label='', agg='1M'):
@@ -203,21 +217,26 @@ def distinct_cuahsi_members(workingdir, st, et, label='', agg='1M'):
     # load the data based on working directory and subset it if necessary
     df = load_data(workingdir)
     df = subset_by_date(df, st, et)
+    
+    # drop duplicates (except the first occurrence)
+    df = df.drop_duplicates(subset='usr_organization', keep='first')
 
     # load cuahsi member data
     mem = pandas.read_csv('dat/cuahsi-members.csv')
     mems = list(mem.name)
 
+    # subset all organizations to just the approved list of CUAHSI orgs
     df_mem = df[df.usr_organization.isin(mems)]
 
-    # group and cumsum and create plot object for CUAHSI members
+    # group, cumulative sum, and create plot object
     grp = agg
     df_mem = df_mem.sort_index()
-    ds_mem = df_mem.groupby(pandas.TimeGrouper(grp)).usr_organization.nunique()
+    ds_mem = df_mem.groupby(pandas.TimeGrouper(grp)) \
+                   .usr_organization.nunique().cumsum()
     x = ds_mem.index
     y = ds_mem.values.tolist()
 
-    return PlotObject(x, y, label=label, type='bar')
+    return PlotObject(x, y, label=label, style='g-')
 
 if __name__ == "__main__":
 
@@ -234,7 +253,7 @@ if __name__ == "__main__":
                         default=datetime.now().strftime('%m-%d-%Y'))
     parser.add_argument('--title',
                         help='title for the output figure',
-                        default='Distinct HydroShare Organizations')
+                        default='Unique HydroShare Organizations')
     parser.add_argument('--filename',
                         help='filename for the output figure',
                         default='organizations.png')
@@ -268,7 +287,7 @@ if __name__ == "__main__":
         plots.append(distinct_us_universities(args.working_dir,
                                               st,
                                               et,
-                                              'US Institutions',
+                                              'US Universities',
                                               args.agg))
     if args.c:
         plots.append(distinct_cuahsi_members(args.working_dir,
@@ -281,7 +300,7 @@ if __name__ == "__main__":
                                                          st,
                                                          et,
                                                          'International'
-                                                         ' Institutions',
+                                                         ' Universities',
                                                          args.agg))
 
     if len(plots) > 0:
