@@ -143,7 +143,7 @@ def distinct_organizations(workingdir, st, et, label='', agg='1M'):
     # group and cumsum
     df = df.sort_index()
     grp = agg
-    ds = df.groupby(pandas.TimeGrouper(grp)) \
+    ds = df.groupby(pandas.Grouper(freq=grp)) \
            .usr_organization.nunique().cumsum()
 
     # create plot object
@@ -169,11 +169,12 @@ def distinct_us_universities(workingdir, st, et, label='', agg='1M'):
 
     # subset all organizations to just the approved list of US orgs
     df_us = df[df.usr_organization.isin(uni_us)]
+    print(df_us.usr_organization.to_string())
 
     # group, cumulative sum, and create plot object
     grp = agg
     df_us = df_us.sort_index()
-    ds_us = df_us.groupby(pandas.TimeGrouper(grp)) \
+    ds_us = df_us.groupby(pandas.Grouper(freq=grp)) \
                  .usr_organization.nunique().cumsum()
     x = ds_us.index
     y = ds_us.values.tolist()
@@ -198,11 +199,12 @@ def distinct_international_universities(workingdir, st, et, label='', agg='1M'):
 
     # subset all organizations to just the approved list of international orgs
     df_int = df[df.usr_organization.isin(uni_int)]
+    print(df_int.usr_organization.to_string())
 
     # group, cumulative sum, and create plot object
     grp = agg
     df_int = df_int.sort_index()
-    ds_int = df_int.groupby(pandas.TimeGrouper(grp)) \
+    ds_int = df_int.groupby(pandas.Grouper(freq=grp)) \
                    .usr_organization.nunique().cumsum()
     x = ds_int.index
     y = ds_int.values.tolist()
@@ -227,11 +229,12 @@ def distinct_cuahsi_members(workingdir, st, et, label='', agg='1M'):
 
     # subset all organizations to just the approved list of CUAHSI orgs
     df_mem = df[df.usr_organization.isin(mems)]
+    print(df_mem.usr_organization.to_string())
 
     # group, cumulative sum, and create plot object
     grp = agg
     df_mem = df_mem.sort_index()
-    ds_mem = df_mem.groupby(pandas.TimeGrouper(grp)) \
+    ds_mem = df_mem.groupby(pandas.Grouper(freq=grp)) \
                    .usr_organization.nunique().cumsum()
     x = ds_mem.index
     y = ds_mem.values.tolist()
@@ -258,7 +261,7 @@ if __name__ == "__main__":
                         help='filename for the output figure',
                         default='organizations.png')
     parser.add_argument('--agg',
-                        help='data aggregation (e.g. D, M, Y, #D, #M, #Y)',
+                        help='data aggregation i.e. http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases',
                         default='1M')
     parser.add_argument('-a',
                         help='plot all distinct organizations',
