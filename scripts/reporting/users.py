@@ -17,30 +17,52 @@ class PlotObject(object):
         self.style = style
 
 
-def load_data(workingdir):
+def load_data(workingdir, pickle_file='users.pkl'):
 
     # load the activity data
-    path = os.path.join(workingdir, 'users.pkl')
+    print('--> reading data...')
+    path = os.path.join(workingdir, pickle_file)
     df = pandas.read_pickle(path)
 
-    # convert dates
-    df['date'] = pandas.to_datetime(df.usr_created_date).dt.normalize()
+    columns = df.columns
 
-    df.usr_created_date = pandas.to_datetime(df.usr_created_date).dt.normalize()
-    df.usr_last_login_date = pandas.to_datetime(df.usr_last_login_date).dt.normalize()
-    df.report_date = pandas.to_datetime(df.report_date).dt.normalize()
+    # parse users
+    if 'usr_created_date' in columns:
 
-    # fill NA values.  This happens when a user never logs in
-    df.usr_last_login_date = df.usr_last_login_date.fillna(0)
+        # convert dates
+        df['date'] = pandas.to_datetime(df.usr_created_date).dt.normalize()
 
-    # replace NaN to clean xls output
-    df = df.fillna('')
+        df.usr_created_date = pandas.to_datetime(df.usr_created_date) \
+                                    .dt.normalize()
+        df.usr_last_login_date = pandas.to_datetime(df.usr_last_login_date) \
+                                       .dt.normalize()
+        df.report_date = pandas.to_datetime(df.report_date) \
+                               .dt.normalize()
 
-    # add another date column and make it the index
-    df['Date'] = df['date']
+        # fill NA values.  This happens when a user never logs in
+        df.usr_last_login_date = df.usr_last_login_date.fillna(0)
 
-    # change the index to timestamp
-    df.set_index(['Date'], inplace=True)
+        # replace NaN to clean xls output
+        df = df.fillna('')
+
+        # add another date column and make it the index
+        df['Date'] = df['date']
+
+        # change the index to timestamp
+        df.set_index(['Date'], inplace=True)
+
+    # parse activity
+    elif 'session_timestamp' in columns:
+
+        # convert dates
+        df['date'] = pandas.to_datetime(df.session_timestamp) \
+                           .dt.normalize()
+
+        # add another date column and make it the index
+        df['Date'] = df['date']
+
+        # change the index to timestamp
+        df.set_index(['Date'], inplace=True)
 
     return df
 
@@ -83,26 +105,32 @@ def total_users(working_dir, st, et, step):
 
 
 def active_users(working_dir, st, et, activerange, step):
-
-    # load the data based on working directory
-    df = load_data(working_dir)
-    df = subset_by_date(df, st, et)
+    """
+    Calculates the number of active users for any given time frame.
+    An active user is a user that has performed a HydroShare action 
+    (as defined in activity.pkl) within the specified active range.
+    """
 
     print('--> calculating active users')
-    x = []
-    y = []
-    
-    t = df['usr_created_date'].min()
+
+    # load the data based on working directory
+    df = load_data(working_dir, 'activity.pkl')
+    df = subset_by_date(df, st, et)
+    df = df.sort_index()
+
+    x, y = [], []
+    t = df.date.min()
     while t < et:
-        # save the current date
-        x.append(t)
 
+        min_active_date = t - timedelta(days=activerange)
         # subset all users to those that exist up to the current time, t
-        subdf = df[df.usr_created_date <= t]
+        subdf = df[(df.date <= t) &
+                   (df.date > min_active_date)]
+        unique_users_count = subdf.user_id.nunique()
 
-        # The number of users active at time dateJoined[i] is all who created an account before dateJoined[i]
-        # i.e. the range 1:i, who have logged in after dateJoined[i]-activerange
-        y.append((subdf.usr_last_login_date > (t - timedelta(days=activerange))).sum())
+        # save the results
+        x.append(t)
+        y.append(unique_users_count)
 
         t += timedelta(days=step)
 
@@ -122,7 +150,7 @@ def new_users(working_dir, st, et, activerange, step):
     print('--> calculating new users')
     x = []
     y = []
-    
+
     t = df['usr_created_date'].min()
     while t < et:
         # save the current date
@@ -130,7 +158,7 @@ def new_users(working_dir, st, et, activerange, step):
 
         # subset all users to those that exist up to the current time, t
         subdf = df[df.usr_created_date <= t]
-        
+
         # The number of new users in activerange up to time dateJoined[i] (i.e. the range 1:i) are users who 
         # created their account after dateJoine[i]-activerange
         earliest_date = t - timedelta(days=activerange)
@@ -149,13 +177,15 @@ def new_users(working_dir, st, et, activerange, step):
 def returning_users(working_dir, st, et, activerange, step):
 
     # load the data based on working directory
-    df = load_data(working_dir)
+    df = load_data(working_dir, 'users.pkl')
     df = subset_by_date(df, st, et)
+    dfa = load_data(working_dir, 'activity.pkl')
+    dfa = subset_by_date(dfa, st, et)
 
     print('--> calculating returning users')
     x = []
     y = []
-    
+
     t = df['usr_created_date'].min()
     while t < et:
         # save the current date
@@ -163,16 +193,19 @@ def returning_users(working_dir, st, et, activerange, step):
 
         # subset all users to those that exist up to the current time, t
         subdf = df[df.usr_created_date <= t]
-        
+
         earliest_date = t - timedelta(days=activerange)
         new = np.where((subdf.usr_created_date >= earliest_date) &
-                                            (subdf.usr_created_date <= t),
-                                            1, 0).sum()
-        active =  (subdf.usr_last_login_date > (t - timedelta(days=activerange))).sum()
-        
-        # Users who were active on the site in the last 90 days,
-        # but obtained an account prior to the last 90 days are people who
-        # continue to return to and work with HydroShare.
+                       (subdf.usr_created_date <= t), 1, 0).sum()
+
+        # calculate active users for this range
+        subdfa = dfa[(dfa.date <= t) &
+                     (dfa.date > earliest_date)]
+        active = subdfa.user_id.nunique()
+
+        # Users who were active, but obtained an account prior to the
+        # active period are users who continue to return to and work
+        # with HydroShare.
         y.append(active - new)
 
         t += timedelta(days=step)
