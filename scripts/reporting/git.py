@@ -2,8 +2,8 @@
 
 import os
 import sys
-import creds
 import pandas
+import getpass
 import requests
 import argparse
 import numpy as np
@@ -20,6 +20,7 @@ class PlotObject(object):
         self.label = label
         self.style = style
 
+
 class Issue(object):
     def __init__(self, issue_dict):
         self.number = issue_dict['number']
@@ -31,7 +32,7 @@ class Issue(object):
                                            .replace('\n', '') \
                                            .replace(',', ' ')
         self.title = issue_dict['title']
-        self.title = self.title.replace('\r','') \
+        self.title = self.title.replace('\r', '') \
                                .replace('\n', '') \
                                .replace(',', ' ')
 
@@ -69,12 +70,14 @@ class Issue(object):
             data.append(self.__issue_to_dict())
         return data
 
-def get_data(url="https://api.github.com/repos/hydroshare/hydroshare/issues", outpath='hydroshare_git_issues.csv'):
+def get_data(username, password,
+             url="https://api.github.com/repos/hydroshare/hydroshare/issues",
+             outpath='hydroshare_git_issues.csv'):
 
     dat = []
     idx = []
 
-    AUTH = (creds.username, creds.password)
+    AUTH = (username, password)
 
     r = requests.get('%s?state=all&per_page=50&page=%d' % (url, 1),
                      auth=AUTH)
@@ -399,12 +402,15 @@ if __name__ == "__main__":
                         action='store_true')
     args = parser.parse_args()
 
+
     csv = os.path.join(args.working_dir, 'git_issues.csv')
     url = args.git_url
 
     # collect github data
     if not os.path.exists(csv) or args.collect:
-        get_data(url, csv)
+        username = input('Please enter your Github username: ')
+        password = getpass.getpass('Password: ')
+        get_data(username, password, url, csv)
     else:
         print('--> reusing %s' % csv)
 
@@ -429,19 +435,3 @@ if __name__ == "__main__":
              xlabel='Date Created')
     
 
-    # run the statistics routine to generate plots
-#    run_statistics(csv)
-
-#    # create a figure to summarize technical debt
-#    fig = plt.figure()
-#    ax = plt.gca()
-#    plt.xticks(rotation=45)
-#    plt.subplots_adjust(bottom=0.15)
-#    plt.ylabel('issue count')
-#    plt.xlabel('date')
-#    plt.title('HydroShare Issue Status')
-#    plt.plot(xdata, df_dt.open, color='r', linestyle='-', label='open')
-#    plt.legend()
-#    plt.tight_layout()
-#
-#    plt.savefig('hs-issue-status.png')
