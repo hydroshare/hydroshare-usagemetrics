@@ -27,10 +27,7 @@ class Issue(object):
         self.state = issue_dict['state']
         self.url = issue_dict['url']
         self.labels = issue_dict['labels']
-        self.description = issue_dict['body']
-        self.description = self.description.replace('\r', '') \
-                                           .replace('\n', '') \
-                                           .replace(',', ' ')
+
         self.title = issue_dict['title']
         self.title = self.title.replace('\r', '') \
                                .replace('\n', '') \
@@ -55,7 +52,6 @@ class Issue(object):
         return dict(number=self.number,
                     created_dt=self.created_dt,
                     closed_dt=self.closed_dt,
-                    description=self.description,
                     state=self.state,
                     title=self.title,
                     url=self.url,
@@ -70,6 +66,7 @@ class Issue(object):
             data.append(self.__issue_to_dict())
         return data
 
+
 def get_data(username, password,
              url="https://api.github.com/repos/hydroshare/hydroshare/issues",
              outpath='hydroshare_git_issues.csv'):
@@ -79,8 +76,7 @@ def get_data(username, password,
 
     AUTH = (username, password)
 
-    r = requests.get('%s?state=all&per_page=50&page=%d' % (url, 1),
-                     auth=AUTH)
+    r = requests.get('%s?state=all&per_page=50&page=%d' % (url, 1), auth=AUTH)
     jdat = r.json()
     for d in jdat:
         dat.append(Issue(d))
@@ -168,37 +164,9 @@ def load_data(working_dir):
     return df
     
 
-#def run_statistics(working_dir):
-#
-#    # load the csv file into a pandas dataframe
-#    df = pandas.read_csv(csv, sep=',', comment='#')
-#    df['created_dt'] = pandas.to_datetime(df.created_dt, errors='coerce') \
-#                             .datetime.normalize()
-#    df['closed_dt'] = pandas.to_datetime(df.closed_dt, errors='coerce') \
-#                            .datetime.normalize()
-#
-#    # summarize all issues by label
-#    d = df.groupby('label').count().number.to_frame()
-#    d.columns = ['all_issues']
-#    # summarize all open issues
-#    d1 = df[df.state == 'open'].groupby('label').count().number.to_frame()
-#    d1.columns = ['open_issues']
-#    d = d.merge(d1, on='label')
-#    tbl = tabulate(d.sort_values('all_issues', ascending=False),
-#                   headers='keys', tablefmt='psql')
-#    print(tbl)
-#
-#    # indicate issues as either 'open' or 'closed'
-#    df.loc[df.state == 'open', 'open'] = 1
-#    df.loc[df.state == 'closed', 'closed'] = 1
-#
-#    # make plots
-#    open_issues(df)
-#    all_issues(df)
-#
-
 def all_issues(working_dir):
-
+    
+    print('--> computing all issues...', flush=True, end='')
     df = load_data(working_dir)
 
     # select unique issue numbers to remove duplicates caused by
@@ -209,16 +177,18 @@ def all_issues(working_dir):
     df_dt = df_unique.groupby(pandas.Grouper(key='created_dt', freq='W')) \
                      .count().cumsum()
 
-#
     xdata = df_dt.index
     ydata = df_dt.number.values
-#    plt.plot(xdata, df_dt.number, color='k', linestyle='-', label='all')
     
     plot = PlotObject(x=xdata, y=ydata, label='all issues', style='k-')
+
+    print('%d total' % ydata[-1])
     return plot
 
 def closed_issues(working_dir):
     
+    print('--> computing all closed...', flush=True, end='')
+    
     df = load_data(working_dir)
 
     # select unique issue numbers to remove duplicates caused by
@@ -228,16 +198,20 @@ def closed_issues(working_dir):
     # group by date
     df_dt = df_unique.groupby(pandas.Grouper(key='created_dt', freq='W')) \
                      .count().cumsum()
-    
+
     xdata = df_dt.index
     ydata = df_dt.closed.values
-    #plt.plot(xdata, ydata, color='b', linestyle='-', label='closed')
 
     plot = PlotObject(x=xdata, y=ydata, label='closed issues', style='b-')
+
+    print('%d total' % ydata[-1])
     return plot
 
+
 def open_issues(working_dir):
-    
+
+    print('--> computing all open...', flush=True, end='')
+
     df = load_data(working_dir)
 
     # select unique issue numbers to remove duplicates caused by
@@ -252,8 +226,9 @@ def open_issues(working_dir):
     ydata = df_dt.open.values
 
     plot = PlotObject(x=xdata, y=ydata, label='open issues', style='r-')
-    return plot
 
+    print('%d total' % ydata[-1])
+    return plot
 
 
 def open_bugs(working_dir):
