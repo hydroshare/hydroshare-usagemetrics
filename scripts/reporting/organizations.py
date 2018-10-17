@@ -169,7 +169,7 @@ def distinct_us_universities(workingdir, st, et, label='', agg='1M'):
 
     # subset all organizations to just the approved list of US orgs
     df_us = df[df.usr_organization.isin(uni_us)]
-    print(df_us.usr_organization.to_string())
+ #   print(df_us.usr_organization.to_string())
 
     # group, cumulative sum, and create plot object
     grp = agg
@@ -199,7 +199,7 @@ def distinct_international_universities(workingdir, st, et, label='', agg='1M'):
 
     # subset all organizations to just the approved list of international orgs
     df_int = df[df.usr_organization.isin(uni_int)]
-    print(df_int.usr_organization.to_string())
+#    print(df_int.usr_organization.to_string())
 
     # group, cumulative sum, and create plot object
     grp = agg
@@ -219,7 +219,7 @@ def distinct_cuahsi_members(workingdir, st, et, label='', agg='1M'):
     # load the data based on working directory and subset it if necessary
     df = load_data(workingdir)
     df = subset_by_date(df, st, et)
-    
+
     # drop duplicates (except the first occurrence)
     df = df.drop_duplicates(subset='usr_organization', keep='first')
 
@@ -229,7 +229,7 @@ def distinct_cuahsi_members(workingdir, st, et, label='', agg='1M'):
 
     # subset all organizations to just the approved list of CUAHSI orgs
     df_mem = df[df.usr_organization.isin(mems)]
-    print(df_mem.usr_organization.to_string())
+#    print(df_mem.usr_organization.to_string())
 
     # group, cumulative sum, and create plot object
     grp = agg
