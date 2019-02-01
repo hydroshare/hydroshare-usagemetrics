@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 
+import os
 import pandas
 import numpy as np
 import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
 
 
-def all_issues(df):
+def all_issues(df, dirname):
 
     # select unique issue numbers to remove duplicates caused by
     # issues having multiple labels
@@ -37,11 +38,11 @@ def all_issues(df):
     plt.plot(xdata, df_dt.open, color='r', linestyle='-', label='open')
     plt.legend()
     plt.tight_layout()
+    outpath = os.path.join(dirname, 'hs-issue-status.png')
+    plt.savefig(outpath)
 
-    plt.savefig('hs-issue-status.png')
 
-
-def open_issues(df):
+def open_issues(df, dirname):
 
     # plot a summary of open issues
     df_open = df[df.state == 'open']
@@ -98,5 +99,6 @@ def open_issues(df):
 
     plt.legend()
     plt.tight_layout()
-    plt.savefig('hs-open-issues-summary.png')
+    outpath = os.path.join(dirname, 'hs-open-issues-summary.png')
+    plt.savefig(outpath)
 

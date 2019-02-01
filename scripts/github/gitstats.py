@@ -12,7 +12,7 @@ import tabular
 from datetime import datetime
 
 
-def run_statistics(csv):
+def run_statistics(csv, dirname):
 
     # load the csv file into a pandas dataframe
     df = pandas.read_csv(csv, sep=',', comment='#')
@@ -38,34 +38,49 @@ def run_statistics(csv):
     df.loc[df.state == 'open', 'open'] = 1
     df.loc[df.state == 'closed', 'closed'] = 1
 
-#    # make plots
-#    plot.open_issues(df)
-#    plot.all_issues(df)
+    # make plots
+    plot.open_issues(df, dirname)
+    plot.all_issues(df, dirname)
 
     st = datetime(2018, 9, 1)
     et = datetime(2018, 12, 1)
-    tabular.all_resolved_issues(df, st, et)
-    tabular.resolved_bugs(df, st, et)
-    tabular.resolved_features(df, st, et)
+    tabular.all_resolved_issues(df, st, et, dirname)
+    tabular.resolved_bugs(df, st, et, dirname)
+    tabular.resolved_features(df, st, et, dirname)
+
+
+def get_working_directory():
+
+    # create a directory for these data
+    dirname = datetime.now().strftime('%m.%d.%Y')
+
+    if os.path.exists(dirname):
+        return dirname
+    else:
+        os.makedirs(dirname)
+
+    print('Metrics will be saved into: %s' % dirname)
+
+    return dirname
 
 
 if __name__ == "__main__":
 
-    csv = 'hydroshare_git_issues.csv'
+    dirname = get_working_directory()
+    csv = os.path.join(dirname, 'hydroshare_git_issues.csv')
 
-    if not os.path.exists(csv):
+    if not os.path.exists(os.path.join(csv)):
         print('\nCould not find %s, proceeding to download git '
               'tickets.\n' % csv)
 
         # collect data
         url = "https://api.github.com/repos/hydroshare/hydroshare/issues"
-        outpath = 'hydroshare_git_issues.csv'
-        collectdata.get_data(url, outpath)
+        collectdata.get_data(url, csv)
     else:
         print('\nFound %s, proceeding to re-use. ' % csv)
         print('If this is not the desired functionality, '
               'remove %s and re-run.\n' % csv)
 
     # run the statistics routine to generate plots
-    run_statistics(csv)
+    run_statistics(csv, dirname)
 

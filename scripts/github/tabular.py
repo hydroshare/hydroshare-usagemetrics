@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 
+import os
 import pandas
 import numpy as np
-from tabulate import tabulate
-import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
 
 
@@ -23,7 +22,7 @@ def subset_by_date(dat, st, et, col='date'):
         return dat.loc[mask]
 
 
-def all_resolved_issues(df, st, et):
+def all_resolved_issues(df, st, et, dirname):
 
     # plot a summary of open issues
     df_closed = df[df.state == 'closed']
@@ -37,7 +36,8 @@ def all_resolved_issues(df, st, et):
     keys = ['closed_dt', 'number', 'title', 'url']
 
     # save to csv
-    with open('all_resolved_issues.csv', 'a') as f:
+    outpath = os.path.join(dirname, 'all_resolved_issues.csv')
+    with open(outpath, 'a') as f:
         f.write('# List of all closed issues for the Hydroshare project\n')
         f.write('# Period start date:  %s\n' % st)
         f.write('# Period end date : %s\n' % et)
@@ -45,7 +45,7 @@ def all_resolved_issues(df, st, et):
         df_resolved[keys].sort_values('closed_dt', ascending=False).to_csv(f)
 
 
-def resolved_bugs(df, st, et):
+def resolved_bugs(df, st, et, dirname):
 
     # plot a summary of open issues
     df_bugs = df[(df.state == 'closed') & (df.label == 'bug')]
@@ -55,7 +55,8 @@ def resolved_bugs(df, st, et):
     keys = ['closed_dt', 'number', 'title', 'url']
 
     # save to csv
-    with open('resolved_bugs.csv', 'a') as f:
+    outpath = os.path.join(dirname, 'resolved_bugs.csv')
+    with open(outpath, 'a') as f:
         f.write('# List of all closed bugs for the Hydroshare project\n')
         f.write('# Period start date:  %s\n' % st)
         f.write('# Period end date : %s\n' % et)
@@ -63,7 +64,7 @@ def resolved_bugs(df, st, et):
         df_bugs[keys].sort_values('closed_dt', ascending=False).to_csv(f)
 
 
-def resolved_features(df, st, et):
+def resolved_features(df, st, et, dirname):
 
     # plot a summary of open issues
     df_feature = df[(df.state == 'closed') & (df.label == 'enhancement')]
@@ -73,7 +74,8 @@ def resolved_features(df, st, et):
     keys = ['closed_dt', 'number', 'title', 'url']
 
     # save to csv
-    with open('resolved_features.csv', 'a') as f:
+    outpath = os.path.join(dirname, 'resolved_features.csv')
+    with open(outpath, 'a') as f:
         f.write('# List of all closed features for the Hydroshare project\n')
         f.write('# Period start date:  %s\n' % st)
         f.write('# Period end date : %s\n' % et)
