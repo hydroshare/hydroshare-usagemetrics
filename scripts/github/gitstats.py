@@ -7,6 +7,9 @@ from tabulate import tabulate
 
 import collectdata
 import plot
+import tabular
+
+from datetime import datetime
 
 
 def run_statistics(csv):
@@ -21,10 +24,12 @@ def run_statistics(csv):
     # summarize all issues by label
     d = df.groupby('label').count().number.to_frame()
     d.columns = ['all_issues']
+
     # summarize all open issues
     d1 = df[df.state == 'open'].groupby('label').count().number.to_frame()
     d1.columns = ['open_issues']
-    d = d.merge(d1, on='label')
+
+    d = d.merge(d1, left_index=True, right_index=True)
     tbl = tabulate(d.sort_values('all_issues', ascending=False),
                    headers='keys', tablefmt='psql')
     print(tbl)
@@ -33,9 +38,15 @@ def run_statistics(csv):
     df.loc[df.state == 'open', 'open'] = 1
     df.loc[df.state == 'closed', 'closed'] = 1
 
-    # make plots
-    plot.open_issues(df)
-    plot.all_issues(df)
+#    # make plots
+#    plot.open_issues(df)
+#    plot.all_issues(df)
+
+    st = datetime(2018, 9, 1)
+    et = datetime(2018, 12, 1)
+    tabular.all_resolved_issues(df, st, et)
+    tabular.resolved_bugs(df, st, et)
+    tabular.resolved_features(df, st, et)
 
 
 if __name__ == "__main__":

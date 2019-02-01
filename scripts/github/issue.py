@@ -7,7 +7,7 @@ class Issue(object):
         self.state = issue_dict['state']
         self.url = issue_dict['url']
         self.labels = issue_dict['labels']
-        self.description = issue_dict['body']
+        self.description = issue_dict['body'] or ""
         self.description = self.description.replace('\r', '') \
                                            .replace('\n', '') \
                                            .replace(',', ' ')
