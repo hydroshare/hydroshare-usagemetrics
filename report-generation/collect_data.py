@@ -1,17 +1,14 @@
 #!/usr/bin/env python3
 
 import os
+import sys
 import pandas
 import elastic
+import argparse
 from datetime import datetime
 
 
-def get_stats_data(users=True,
-                   resources=True,
-                   activity=True,
-                   dirname='.',
-                   aquery='-user_id:None AND -action:visit'
-                   ):
+def get_stats_data(users=True, resources=True, activity=True, dirname='.'):
 
     # standard query parameters
     host = 'usagemetrics.hydroshare.org'
@@ -31,6 +28,7 @@ def get_stats_data(users=True,
     uindex = '*user*latest*'
     rindex = '*resource*latest*'
     aindex = '*activity*'
+    aquery = '-user_id:None AND -action:visit'
 
     # get user data
     if users:
@@ -81,8 +79,21 @@ def get_stats_data(users=True,
 
 
 if __name__ == '__main__':
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-s',
+                        help='skip data collection if it already exists',
+                        action='store_true',
+                        default=False)
+    args = parser.parse_args()
+
     # create a directory for these data
     dirname = datetime.now().strftime('%m.%d.%Y')
+    
+    if args.s:
+        if os.path.exists(dirname):
+            print('Directory already exists, skipping')
+            sys.exit(0)
 
     i = 2
     while os.path.exists(dirname):

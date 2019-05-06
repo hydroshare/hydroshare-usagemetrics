@@ -10,6 +10,7 @@ import multiprocessing as mp
 import datetime
 import pdb
 import signal
+import pickle
 
 # global so that it can be called via processes
 hs = None
@@ -170,12 +171,18 @@ while wrkdir is None:
     if not os.path.exists(wrkdir):
         print('Path does not exist, please enter a valid working directory')
         wrkdir = None
-    elif not os.path.exists(os.path.join(wrkdir, 'resources.pkl')):
-        print('Metrics data does not exist in the working directory. '
-              'Please collect data before proceeding')
+
         sys.exit(-1)
 
-if not os.path.exists(os.path.join(wrkdir, 'funding.pkl')):
+
+res_pkl = os.path.join(wrkdir, 'resources.pkl')
+resources_list = os.path.join(wrkdir, 'resources_list.pkl')
+fun_pkl = os.path.join(wrkdir, 'funding.pkl')
+
+resources_list_exists = os.path.exists(resources_list)
+fun_pkl_exists = os.path.exists(fun_pkl)
+
+if not (resources_list_exists and fun_pkl_exists):
     tries = 0
     host = input('Enter host (or www): ') or 'www.hydroshare.org'
     while 1:
@@ -194,17 +201,28 @@ if not os.path.exists(os.path.join(wrkdir, 'funding.pkl')):
             print('Number of attempts exceeded, exiting')
             sys.exit(1)
         print('')
-    
-    # collect resource ids and search for funding agencies
+
+if not os.path.exists(resources_list):
     resources = collect_resource_ids()
+    with open(resources_list, 'wb') as f:
+        pickle.dump(resources, f)
+else:
+    with open(resources_list, 'rb') as f:
+        resources = pickle.load(f)
+
+if not os.path.exists(fun_pkl):
     df = search_hs(resources)
 else:
-    df = pd.read_pickle(os.path.join(wrkdir, 'funding.pkl'))
+    df = pd.read_pickle(fun_pkl)
 
+# create the resources combined file
 res_df = pd.read_pickle(os.path.join(wrkdir, 'resources.pkl'))
 
+
 # join with resources dataframe
+print('Creating the funding dataframe')
 df = pd.merge(df, res_df, how='outer', left_on="res_title", right_on="res_title")
+print('Saving the funding dataframe to CSV')
 df.to_csv(os.path.join(wrkdir, 'funding.csv'))
 
 # print some statistics

@@ -6,7 +6,11 @@ import elastic
 from datetime import datetime
 
 
-def get_stats_data(users=True, resources=True, activity=True, dirname='.'):
+def get_stats_data(users=True,
+                   resources=True,
+                   activity=True,
+                   dirname='.',
+                   aquery='-user_id:None AND -action:visit'):
 
     # standard query parameters
     host = 'usagemetrics.hydroshare.org'
@@ -26,7 +30,6 @@ def get_stats_data(users=True, resources=True, activity=True, dirname='.'):
     uindex = '*user*latest*'
     rindex = '*resource*latest*'
     aindex = '*activity*'
-    aquery = '-user_id:None AND -action:visit'
 
     # get user data
     if users:

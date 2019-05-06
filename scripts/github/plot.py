@@ -54,19 +54,19 @@ def open_issues(df, dirname):
                                                      freq='W')) \
                              .count().cumsum()
 
-    # group open enhancements by date
-    df_open_enh = df_open[df_open.label == 'enhancement']
-    df_open_enh_list = list(df_open_enh.number.values)
-    df_open_enh = df_open_enh.groupby(pandas.Grouper(key='created_dt',
-                                                     freq='W')) \
-                             .count().cumsum()
+#    # group open enhancements by date
+#    df_open_enh = df_open[df_open.label == 'enhancement']
+#    df_open_enh_list = list(df_open_enh.number.values)
+#    df_open_enh = df_open_enh.groupby(pandas.Grouper(key='created_dt',
+#                                                     freq='W')) \
+#                             .count().cumsum()
 
     # group all open issues that are not bugs or enhancements by date
     df_open_non = df_open[~df_open.label.isin(['bug', 'enhancement'])]
     df_open_non = df_open_non.drop_duplicates('number')
 
     # remove all issue numbers that exist in enhancements and bugs lists
-    bug_enh_tickets = list(df_open_bug_list) + list(df_open_enh_list)
+    bug_enh_tickets = list(df_open_bug_list) #+ list(df_open_enh_list)
     df_open_non = df_open_non[~df_open_non.isin(bug_enh_tickets)]
 
     df_open_non = df_open_non.groupby(pandas.Grouper(key='created_dt',
@@ -93,9 +93,9 @@ def open_issues(df, dirname):
     ydata = df_open_bug.number.values
     plt.plot(xdata, ydata, color='r', linestyle='-', label='bugs')
 
-    xdata = df_open_enh.index
-    ydata = df_open_enh.number.values
-    plt.plot(xdata, ydata, color='b', linestyle='-', label='enhancements')
+#    xdata = df_open_enh.index
+#    ydata = df_open_enh.number.values
+#    plt.plot(xdata, ydata, color='b', linestyle='-', label='enhancements')
 
     plt.legend()
     plt.tight_layout()
