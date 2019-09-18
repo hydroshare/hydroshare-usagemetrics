@@ -10,7 +10,8 @@ import multiprocessing as mp
 import datetime
 import pdb
 import signal
-import pickle
+import argparse
+
 
 # global so that it can be called via processes
 hs = None
@@ -95,7 +96,7 @@ def search_hs(resources):
     # saving results to at data frame
     df = pd.DataFrame(data)
     df.to_pickle(os.path.join(wrkdir, 'funding.pkl'))
-#    df.to_csv(os.path.join(wrkdir, 'funding.csv'))
+    df.to_csv(os.path.join(wrkdir, 'funding.csv'))
 
     return df
 
@@ -120,19 +121,13 @@ def query_resource_ids(in_q, out_q, hs):
     while True:
         st, et = in_q.get()
         if st is None:
-            print(f'{mp.current_process()}: EXITING', flush=True)
             break
-        try:
-            resources = hs.resources(from_date=st, to_date=et)
-            print(f'{mp.current_process()}: SUCCESS {st} -> {et}', flush=True)
-            for resource in resources:
-                resid = resource['resource_id']
-                out_q.put(resid)
-#                print('.', end='', flush=True)
-        except:
-            print(f'\n{mp.current_process()}: ERROR {st} -> {et}\n', flush=True)
 
-
+        resources = hs.resources(from_date=st, to_date=et)
+        for resource in resources:
+            resid = resource['resource_id']
+            out_q.put(resid)
+            print('.', end='', flush=True)
 
 
 def collect_resource_ids():
@@ -158,84 +153,72 @@ def collect_resource_ids():
 
     # wait for all processes to finish
     while not in_q.empty():
-        time.sleep(3)
+        time.sleep(1)
 
     # dequeue out_q to prevent join from freezing
-    print('--> dequeuing results... ', end='', flush=True)
     res_ids = []
     while not out_q.empty():
         val = out_q.get()
         res_ids.append(val)
-    print('done')
-    
     pool.close()
     pool.join()
     return res_ids
 
 
-st = time.time()
+def authenticate():
+    tries = 0
+    host = 'www.hydroshare.org'
+    while 1:
+        u = input('Enter HS username: ')
+        p = getpass.getpass('Enter HS password: ')
+        auth = hsapi.HydroShareAuthBasic(username=u, password=p)
+        hs = hsapi.HydroShare(hostname=host, auth=auth)
+        try:
+            hs.getUserInfo()
+            break
+        except hsapi.exceptions.HydroShareHTTPException:
+            print('Authentication failed, attempt %d' % (tries+1))
+            tries += 1
 
-while wrkdir is None:
-    wrkdir = input('Enter working directory: ') or None
-    if not os.path.exists(wrkdir):
-        print('Path does not exist, please enter a valid working directory')
-        wrkdir = None
-
-        sys.exit(-1)
+        if tries >= 3:
+            print('Number of attempts exceeded, exiting')
+            sys.exit(1)
+    return hs
 
 
 if __name__ == "__main__":
-    res_pkl = os.path.join(wrkdir, 'resources.pkl')
-    resources_list = os.path.join(wrkdir, 'resources_list.pkl')
-    fun_pkl = os.path.join(wrkdir, 'funding.pkl')
-    
-    resources_list_exists = os.path.exists(resources_list)
-    fun_pkl_exists = os.path.exists(fun_pkl)
-    
-    if not (resources_list_exists and fun_pkl_exists):
-        tries = 0
-        host = input('Enter host (or www): ') or 'www.hydroshare.org'
-        while 1:
-            u = input('Enter HS username: ')
-            p = getpass.getpass('Enter HS password: ')
-            auth = hsapi.HydroShareAuthBasic(username=u, password=p)
-            hs = hsapi.HydroShare(hostname=host, auth=auth)
-            try:
-                hs.getUserInfo()
-                break
-            except hsapi.exceptions.HydroShareHTTPException:
-                print('Authentication failed, attempt %d' % (tries+1))
-                tries += 1
-        
-            if tries >= 3:
-                print('Number of attempts exceeded, exiting')
-                sys.exit(1)
-            print('')
-    
-    if not os.path.exists(resources_list):
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--working-dir',
+                        help='path to directory containing elasticsearch data',
+                        required=True)
+    parser.add_argument('-c',
+                        help='force collection of data',
+                        action='store_true')
+    args = parser.parse_args()
+
+    wrkdir = args.working_dir
+
+
+    if not os.path.exists(os.path.join(wrkdir, 'funding.pkl')) or \
+            args.c:
+        # collect resource ids and search for funding agencies
+        hs = authenticate()
         resources = collect_resource_ids()
-        print('-> saving resource ids')
-        with open(resources_list, 'wb') as f:
-            pickle.dump(resources, f)
-    else:
-        with open(resources_list, 'rb') as f:
-            resources = pickle.load(f)
-    
-    if not os.path.exists(fun_pkl):
         df = search_hs(resources)
     else:
-        df = pd.read_pickle(fun_pkl)
-    
-    # create the resources combined file
-    res_df = pd.read_pickle(os.path.join(wrkdir, 'resources.pkl'))
-    
-    
+        df = pd.read_pickle(os.path.join(wrkdir, 'funding.pkl'))
+
+    if os.path.exists(os.path.join(wrkdir, 'resources.pkl')):
+        res_df = pd.read_pickle(os.path.join(wrkdir, 'resources.pkl'))
+    else:
+        print('Could not locate resources.pkl, please run collect_data.py')
+        sys.exit(0)
+
     # join with resources dataframe
-    print('Creating the funding dataframe')
     df = pd.merge(df, res_df, how='outer', left_on="res_title", right_on="res_title")
-    print('Saving the funding dataframe to CSV')
     df.to_csv(os.path.join(wrkdir, 'funding.csv'))
-    
+
     # print some statistics
     print('\n\n' + 50*'-')
     print('HS Funding Statistics Summary:')
@@ -246,5 +229,4 @@ if __name__ == "__main__":
         for key in ['count', 'unique', 'top', 'freq']:
             print('{:<10} {:<10}'.format(key, stats[key]))
     print('Number of resources containing funding metadata: %d' % len(df))
-    print('Elapsed time: %5.5f seconds' % (time.time() - st))
     print('\n' + 50*'-' + '\n')

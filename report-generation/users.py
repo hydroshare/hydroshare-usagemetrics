@@ -144,6 +144,11 @@ def active_users(working_dir, st, et, activerange, step):
     plot = PlotObject(x, y, label='active users (%d days)' % activerange,
                       style='b-')
 
+    with open(f'{working_dir}/active-users-{activerange}.csv', 'w') as f:
+        f.write(f'Date,Number of Active Users (logged in with {activerange} days)\n')
+        for i in range(0, len(x)):
+            f.write(f'{str(x[i])},{y[i]}\n')
+
     return plot
 
 

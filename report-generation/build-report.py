@@ -3,9 +3,10 @@
 
 import os
 import sys
+import getpass
 from subprocess import Popen, PIPE
 from datetime import datetime
-from pylatex import Document, Section, Subsection, Figure, Command, NewLine, SmallText, SubFigure, NewPage
+from pylatex import Document, Section, Subsection, Figure, Command, NewLine, SmallText, SubFigure, NewPage, Table
 from pylatex.utils import italic, NoEscape
 
 
@@ -20,13 +21,26 @@ org_all = 'hs_all_organizations.png'
 org_cuahsi = 'hs_us_int_cuahsi_organizations.png'
 git_open_closed = 'opened-closed.png'
 git_open = 'open.png'
+resource_size_total = 'hs-res-size-total.png'
+resource_size_by_type = 'hs-res-size-by-type.png'
+all_actions_table = 'hs-all-actions-table.png'
+
 
 def generate_figures(wrkdir):
+
+    # collect github credentials
+    git_username =''
+    git_password = ''
+#    git_username = input('Please enter your Github username: ')
+#    git_password = getpass.getpass('Password: ')
 
     # collect data
     print('Collecting data')
     run(['collect_data.py', '-s'])
 
+    #########
+    # USERS #
+    #########
     print('Generating %s' % users_all_30)
     run(['users.py',
          '--working-dir=%s' % wrkdir,
@@ -69,6 +83,9 @@ def generate_figures(wrkdir):
          '--figure-title=HydroShare User Type Specified',
          '-c'])
 
+    #############
+    # DOWNLOADS #
+    #############
     print('Generating %s' % downloads_unknown)
     run(['activity-pie.py',
          '--working-dir=%s' % wrkdir,
@@ -83,6 +100,9 @@ def generate_figures(wrkdir):
          '--figure-title=HydroShare Resource Downloads for Known Users',
          '-k'])
 
+    #################
+    # ORGANIZATIONS #
+    #################
     print('Generating %s' % org_all)
     run(['organizations.py',
          '--working-dir=%s' % wrkdir,
@@ -98,10 +118,25 @@ def generate_figures(wrkdir):
          '--filename=%s' % org_cuahsi,
          '--title=Cumulative Unique Organizations by Category',
          '-uic'])
+    
+    ###########
+    # ACTIONS #
+    ###########
+    print('Generating %s' % all_actions_table)
+    run(['activity.py',
+         '--working-dir=%s' % wrkdir,
+         '--agg=Q',
+         '--filename=%s' % all_actions_table,
+         '-t'])
 
+    ##########
+    # GITHUB #
+    ##########
     print('Generating %s' % git_open_closed)
     run(['git.py',
          '--working-dir=%s' % wrkdir,
+         '--username=%s' % git_username,
+         '--password=%s' % git_password,
          '--plot-type=bar',
          '--agg=3M',
          '--st=01-01-2014',
@@ -109,16 +144,36 @@ def generate_figures(wrkdir):
          '--figure-title=Summary of Opened and Closed Issues',
          '-co'])
 
-    print('Generating %s' % git_open)
-    run(['git.py',
-         '--working-dir=%s' % wrkdir,
-         '--plot-type=bar',
-         '--agg=3M',
-         '--st=01-01-2014',
-         '--filename=%s' % git_open,
-         '--figure-title=Summary of Closed Issues',
-         '-o'])
+#    print('Generating %s' % git_open)
+#    run(['git.py',
+#         '--working-dir=%s' % wrkdir,
+#         '--plot-type=bar',
+#         '--agg=3M',
+#         '--st=01-01-2014',
+#         '--filename=%s' % git_open,
+#         '--figure-title=Summary of Closed Issues',
+#         '-c'])
 
+    #############
+    # RESOURCES #
+    #############
+    print('Generating %s' % resource_size_total)
+    run(['resources.py',
+         '--working-dir=%s' % wrkdir,
+         '--aggregation=1M',
+         '--st=01-01-2014',
+         '--filename=%s' % resource_size_total,
+         '--figure-title=Cumulative Resource Size all Types (Monthly Avg)', 
+         '-t'])
+
+    print('Generating %s' % resource_size_by_type)
+    run(['resources.py',
+         '--working-dir=%s' % wrkdir,
+         '--aggregation=1M',
+         '--st=01-01-2014',
+         '--filename=%s' % resource_size_by_type,
+         '--figure-title=Cumulative Resource Size by Type (Monthly Avg)', 
+         '-u'])
 
 def output_exists(cmd):
     fname = None
@@ -138,11 +193,15 @@ def run(command):
         return
 
     cmd = [sys.executable] + command
-    with Popen(cmd, stdout=PIPE, bufsize=1) as sp:
-        for line in sp.stdout:
-            txt = line.strip().decode('utf-8')
-            if txt != '':
-                print('.. ' + txt, flush=True)
+
+    p = Popen(cmd, stderr=PIPE)
+    while True:
+        out = p.stderr.read(1).decode('utf-8')
+        if out == '' and p.poll() != None:
+            break
+        if out != '':
+            sys.stdout.write(out)
+            sys.stdout.flush()
 
 
 def create_report(wrkdir, report_fn='hs-metrics-report'):
@@ -154,9 +213,11 @@ def create_report(wrkdir, report_fn='hs-metrics-report'):
         "bottom": "0.25in",
     }
     doc = Document(geometry_options=geometry_options)
+    doc.packages.append(NoEscape(r'\usepackage[section]{placeins}'))
 
     doc.preamble.append(NoEscape(r'\title{HydroShare Usage Metrics Report' +
-                        r'\\ \normalsize Autogenerated report}'))
+                        r'\\ \normalsize Autogenerated report ' + 
+                        r'\\ \normalsize Tony Castronova <acastronova@cuahsi.org> }'))
     doc.preamble.append(Command('date', NoEscape(r'\today')))
     doc.append(NoEscape(r'\maketitle'))
 
@@ -168,7 +229,7 @@ def create_report(wrkdir, report_fn='hs-metrics-report'):
     if os.path.exists(report_pdf):
         os.remove(report_pdf)
 
-    with doc.create(Section('Users Statistics')):
+    with doc.create(Section('HydroShare Statistics')):
         doc.append('This section contains figures and statistics about ' +
                    'HydroShare users, their activity, and their distribution '+
                    'among domains in the community. All information described '+
@@ -176,104 +237,159 @@ def create_report(wrkdir, report_fn='hs-metrics-report'):
                    'ElasticSearch database which can be found at: ' +
                    'http://usagemetrics.hydroshare.org.')
 
-        with doc.create(Subsection('User Activity')) as a:
-            a.append("""The charts in this section capture the general usage and distribution of HydroShare users.""")
-            with a.create(Figure(position='h!')) as fig:
-                fig.add_image(users_all_30, width='300px')
-                caption = """Total cumulative HydroShare accounts through time
-                based on the date each account is created, (2) active accounts
-                defined as users that have logged into HydroShare within the 
-                last 30 days, and (3) new accounts defined as HydroShare
-                accounts that were created within the active range (i.e.
-                the portion of active users that created an account within the
-                last 30 days).
-                """
+        with doc.create(Figure(position='!htb')) as fig:
+            fig.add_image(users_all_30, width='300px')
+            caption = """Total cumulative HydroShare accounts through time
+            based on the date each account is created, (2) active accounts
+            defined as users that have logged into HydroShare within the
+            last 30 days, and (3) new accounts defined as HydroShare
+            accounts that were created within the active range (i.e.
+            the portion of active users that created an account within the
+            last 30 days).
+            """
+            fig.add_caption(caption.replace('\n', ''))
+
+        with doc.create(Figure(position='!htb')) as fig:
+            with fig.create(SubFigure(position='b',
+                            width=NoEscape(r'0.48\linewidth'))) as sf:
+                sf.add_image(users_all_180, width=NoEscape(r'\linewidth'))
+                caption = """(1) Total cumulative HydroShare accounts 
+                through time based on the date each account is created,
+                (2) active accounts defined as users that have logged into
+                HydroShare within the last 180 days, and (3) new accounts
+                defined as HydroShare accounts that were created within
+                the active range (i.e. the portion of active users that
+                created an account within the last 180 days)."""
                 fig.add_caption(caption.replace('\n', ''))
-            with a.create(Figure(position='h!')) as fig:
-                with fig.create(SubFigure(position='b',
-                                width=NoEscape(r'0.48\linewidth'))) as sf:
-                    sf.add_image(users_all_180, width=NoEscape(r'\linewidth'))
-                    caption = """(1) Total cumulative HydroShare accounts 
-                    through time based on the date each account is created,
-                    (2) active accounts defined as users that have logged into
-                    HydroShare within the last 180 days, and (3) new accounts
-                    defined as HydroShare accounts that were created within
-                    the active range (i.e. the portion of active users that
-                    created an account within the last 180 days)."""
-                    fig.add_caption(caption.replace('\n', ''))
-                fig.append(NoEscape(r'\hfill'))
-                with fig.create(SubFigure(position='b',
-                                width=NoEscape(r'0.48\linewidth'))) as sf:
-                    sf.add_image(users_active_180, width=NoEscape(r'\linewidth'))
-                    caption = """(1) Active accounts defined as users that 
-                    have logged into HydroShare within the last 180 days, (2)
-                    new accounts defined as HydroShare accounts that were
-                    created within the active range (i.e. the portion of
-                    active users that created an account within the last
-                    180 days), and (3) returning users defined as the
-                    portion of active users that created their account
-                    outside the active range"""
-                    fig.add_caption(caption.replace('\n', ''))
-            with a.create(Figure(position='h!')) as fig:
-                with fig.create(SubFigure(position='b',
-                                width=NoEscape(r'0.48\linewidth'))) as sf:
-                    sf.add_image(users_types, width=NoEscape(r'\linewidth'))
-                    caption = """The distribution of HydroShare users based on
-                    how each user defines specified their organizational type
-                    from a controlled list of "user types." Users that have 
-                    not completed this "user type" attribute of their profile
-                    are not shown."""
-                    fig.add_caption(caption.replace('\n', ''))
-                fig.append(NoEscape(r'\hfill'))
-                with fig.create(SubFigure(position='b',
-                                width=NoEscape(r'0.48\linewidth'))) as sf:
-                    sf.add_image(users_specified,
-                                 width=NoEscape(r'\linewidth'))
-                    caption = """The distribution of HydroShare users that 
-                    have defined a "user type" in their profile versus users 
+            fig.append(NoEscape(r'\hfill'))
+            with fig.create(SubFigure(position='b',
+                            width=NoEscape(r'0.48\linewidth'))) as sf:
+                sf.add_image(users_active_180, width=NoEscape(r'\linewidth'))
+                caption = """(1) Active accounts defined as users that 
+                have logged into HydroShare within the last 180 days, (2)
+                new accounts defined as HydroShare accounts that were
+                created within the active range (i.e. the portion of
+                active users that created an account within the last
+                180 days), and (3) returning users defined as the
+                portion of active users that created their account
+                outside the active range"""
+                fig.add_caption(caption.replace('\n', ''))
+
+        with doc.create(Figure(position='!htb')) as fig:
+            with fig.create(SubFigure(position='b',
+                            width=NoEscape(r'0.48\linewidth'))) as sf:
+                sf.add_image(users_types, width=NoEscape(r'\linewidth'))
+                caption = """The distribution of HydroShare users based on
+                how each user defines specified their organizational type
+                from a controlled list of "user types." Users that have
+                not completed this "user type" attribute of their profile
+                are not shown."""
+                fig.add_caption(caption.replace('\n', ''))
+            fig.append(NoEscape(r'\hfill'))
+            with fig.create(SubFigure(position='b',
+                            width=NoEscape(r'0.48\linewidth'))) as sf:
+                sf.add_image(users_specified,
+                             width=NoEscape(r'\linewidth'))
+                caption = """The distribution of HydroShare users that 
+                    have defined a "user type" in their profile versus users
                     that have not. As of <insert date> user type is a required
                     attribute when creating new accounts."""
-                    fig.add_caption(caption.replace('\n', ''))
-            with a.create(Figure(position='h!')) as fig:
-                with fig.create(SubFigure(position='b',
-                                width=NoEscape(r'0.48\linewidth'))) as sf:
-                    sf.add_image(downloads_unknown,
-                                 width=NoEscape(r'\linewidth'))
-                    sf.add_caption('')
-                fig.append(NoEscape(r'\hfill'))
-                with fig.create(SubFigure(position='b',
-                                width=NoEscape(r'0.48\linewidth'))) as sf:
-                    sf.add_image(downloads_known, width=NoEscape(r'\linewidth'))
-                    sf.add_caption('')
-            a.append(NewPage())
+                fig.add_caption(caption.replace('\n', ''))
 
-    with doc.create(Section('Organizational Statistics')) as o:
-        o.append('<description>')
-        with o.create(Figure(position='h!')) as fig:
+        with doc.create(Figure(position='!htb')) as fig:
             with fig.create(SubFigure(position='b',
                             width=NoEscape(r'0.48\linewidth'))) as sf:
-                sf.add_image(org_all, width=NoEscape(r'\linewidth'))
-                sf.add_caption('<caption>')
+                sf.add_image(downloads_unknown,
+                             width=NoEscape(r'\linewidth'))
+                caption = """Total HydroShare resource downloads divided 
+                    into two groups: HydroShare users and anonymous users. 
+                    Anonymous downloads are currently possible for any public
+                    or published resource."""
+                sf.add_caption(caption.replace('\n', ''))
             fig.append(NoEscape(r'\hfill'))
             with fig.create(SubFigure(position='b',
                             width=NoEscape(r'0.48\linewidth'))) as sf:
-                sf.add_image(org_cuahsi, width=NoEscape(r'\linewidth'))
-                sf.add_caption('<caption>')
-        o.append(NewPage())
+                sf.add_image(downloads_known,
+                             width=NoEscape(r'\linewidth'))
+                caption = """The distribution of user types for all  
+                    downloads by known HydroShare users, i.e. the user types
+                    for the "HydroShare Users" subset in plot (a). Note 
+                    "Unspecified" is currently an option for HydroShare users
+                    but largely represents users that have not completed their
+                    profile (typically we classify these as inactive users)."""
+                sf.add_caption(caption.replace('\n', ''))
 
-    with doc.create(Section('Development Statistics')) as d:
-        d.append('<description>')
-        with d.create(Figure(position='h!')) as fig:
-            with d.create(SubFigure(position='b',
-                          width=NoEscape(r'0.48\linewidth'))) as sf:
-                sf.add_image(git_open_closed, width=NoEscape(r'\linewidth'))
-                sf.add_caption('<caption>')
-            fig.append(NoEscape(r'\hfill'))
-            with d.create(SubFigure(position='b',
-                          width=NoEscape(r'0.48\linewidth'))) as sf:
-                sf.add_image(git_open, width=NoEscape(r'\linewidth'))
-                sf.add_caption('<caption>')
-        d.append(NewPage())
+    doc.append(NewPage())
+
+    with doc.create(Figure(position='!htb')) as fig:
+        with fig.create(SubFigure(position='b',
+                        width=NoEscape(r'0.48\linewidth'))) as sf:
+            sf.add_image(org_all, width=NoEscape(r'\linewidth'))
+            caption = """Cumulative total number of unique, user-specified,
+            organizations that are represented in HydroShare. Values are
+            plotted by the account creation date of the user account that
+            defined the organization. In the event that an organization has
+            been defined multiple times, it is associated with the first
+            account that referenced it."""
+            sf.add_caption(caption.replace('\n', ''))
+        fig.append(NoEscape(r'\hfill'))
+        with fig.create(SubFigure(position='b',
+                        width=NoEscape(r'0.48\linewidth'))) as sf:
+            sf.add_image(org_cuahsi, width=NoEscape(r'\linewidth'))
+            caption = """Cumulative total of unique, user-specified,
+            organizations divided into (1) US universities, (2) CUAHSI
+            member institutions, and (3) international universities. Values are
+            plotted by the account creation date of the user account that
+            defined the organization. In the event that an organization has
+            been defined multiple times, it is associated with the first
+            account that referenced it."""
+
+            sf.add_caption(caption.replace('\n', ''))
+        doc.append(NewPage())
+
+    with doc.create(Figure(position='!htb')) as fig:
+        fig.add_image(resource_size_total, width='500px')
+        caption = """The cumulative storage of all HydroShare resources
+        plotted by the date in which they were created. These data are
+        aggregated monthly and then summed cumulatively.
+            """
+        fig.add_caption(caption.replace('\n', ''))
+
+    with doc.create(Figure(position='!htb')) as fig:
+        fig.add_image(resource_size_by_type, width='500px')
+        caption = """The cumulative storage each resource type in
+        HydroShare, plotted by the date in which they were created. These
+        data are aggregated monthly and then summed cumulatively.
+        """
+        fig.add_caption(caption.replace('\n', ''))
+
+    with doc.create(Figure(position='!htb')) as tab:
+        tab.add_image(all_actions_table, width='500px')
+        caption = """
+        The total number of actions performed by HydroShare
+        users aggregated quarterly. A session is a unique identity
+        created by Django for storing user-specific data and they
+        expire every <insert value> minutes. A login action is recorded
+        every time a user account is successfully authenticated.
+        Delete, create, and download actions are recorded
+        whenever a user invokes one of these methods on a
+        resource. App Launch is an action that is recorded
+        whenever a user invokes the "Open With" functionality on a
+        resource landing page.
+            """
+        tab.add_caption(caption.replace('\n', ''))
+
+    with doc.create(Figure(position='!htb')) as fig:
+        fig.add_image(git_open_closed,
+                      width='500px')
+        caption = """"""
+        fig.add_caption(caption.replace('\n', ''))
+#    with doc.create(Figure(position='!htb')) as fig:
+#        fig.add_image(git_open,
+#                      width='500px')
+#        caption = """"""
+#        fig.add_caption(caption.replace('\n', ''))
+    doc.append(NewPage())
 
     # create the report
     print('Generating LaTeX Document')

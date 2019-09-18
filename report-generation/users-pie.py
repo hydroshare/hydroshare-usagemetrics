@@ -114,10 +114,11 @@ def user_types_pie_chart(working_dir, st, et, drop_cols,
     plt.title(figtitle)
     ax = plt.axes()
 
-    df.percent.plot.pie(ax=ax, labeldistance=1.05)
+    df.percent.plot.pie(ax=ax, labeldistance=1.1)
 
     plt.xlabel('')
     plt.ylabel('')
+    plt.tight_layout()
 
     # save the figure and the data
     print('--> saving figure as %s' % filename)

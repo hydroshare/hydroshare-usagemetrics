@@ -54,7 +54,7 @@ def subset_by_date(dat, st, et):
         return dat.loc[mask]
 
 
-def activity_table(working_dir, st, et, agg='Q'):
+def activity_table(working_dir, agg='Q'):
 
     print('--> calculating activity')
 
@@ -66,13 +66,61 @@ def activity_table(working_dir, st, et, agg='Q'):
     for act in df.action.unique():
         df[act] = np.where(df.action == act, 1, 0)
 
-    # remove the action column since its been divided into 
+    # remove the action column since its been divided into
     # individual columns
     df.drop('action', inplace=True)
 
     df = df.groupby(pandas.Grouper(freq=agg)).sum()
 
-    print(tabulate(df, headers='keys', tablefmt='psql'))
+    return df
+
+
+def create_activity_table_figure(df, filename):
+
+    fig, ax = plt.subplots(figsize=(15, 15))
+
+    # hide axes
+    fig.patch.set_visible(False)
+    ax.axis('off')
+    ax.axis('tight')
+
+    # drop unnecessary columns
+    df = df.filter(['Date', 'begin_session', 'login', 'delete',
+                    'create', 'download', 'app_launch'], axis=1)
+
+    # rename columns
+    df = df.rename(columns={'begin_session': 'Begin\nSession',
+                            'login': 'Login',
+                            'delete': 'Delete\nResource',
+                            'create': 'Create\nResource',
+                            'download': 'Download\nResource',
+                            'app_launch': 'App\nLaunch'
+                            })
+
+    # modify the index to string type - for table printing
+    df.index = [item.strftime('%m-%d-%Y') for item in df.index]
+
+    # reverse the rows so that the table will be created in descending
+    # chronological order
+    df = df[::-1]
+
+    # set column widths
+    column_widths = [.1] * len(df.columns)
+
+    # build the table object
+    table = ax.table(rowLabels=df.index, cellText=df.values,
+                     colLabels=df.columns, colWidths=column_widths,
+                     loc='center')
+    # set font size
+    table.auto_set_font_size(False)
+    table.set_fontsize(14) 
+    table.scale(1, 4)
+
+    fig.tight_layout()
+
+    print('--> saving figure as %s' % filename)
+    plt.savefig(filename)
+
 
 
 def total_app_actions(working_dir, st, et, agg):
@@ -223,7 +271,7 @@ if __name__ == "__main__":
                         required=True)
     parser.add_argument('--agg',
                         help='aggregation, i.e http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases.',
-                        default='1D')
+                        default='Q')
     parser.add_argument('--figure-title',
                         help='title for the output figure',
                         default='HydroShare App Launches %s'
@@ -281,7 +329,10 @@ if __name__ == "__main__":
         plots = []
 
         if args.t:
-            res = activity_table(args.working_dir, st, et, agg)
+            res = activity_table(args.working_dir, agg)
+            create_activity_table_figure(res,
+                                         os.path.join(args.working_dir,
+                                                      args.filename))
         if args.a:
             res = total_app_actions(args.working_dir, st, et, agg)
             plots.append(res)

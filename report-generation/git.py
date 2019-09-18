@@ -112,6 +112,7 @@ def get_data(username, password,
              url="https://api.github.com/repos/hydroshare/hydroshare/issues",
              outpath='hydroshare_git_issues.csv'):
 
+
     dat = []
     idx = []
 
@@ -282,7 +283,7 @@ def open_issues(working_dir, st, et, ptype='line', agg='W'):
     ydata = df_dt.open.values
 
     plot = PlotObject(x=xdata, y=ydata,
-                      label='open issues', style='r-',
+                      label='opened issues', style='r-',
                       type=ptype)
 
     print('%d total' % ydata[-1])
@@ -443,6 +444,10 @@ if __name__ == "__main__":
     parser.add_argument('--git-url',
                         help='url for github project',
                         default="https://api.github.com/repos/hydroshare/hydroshare/issues")
+    parser.add_argument('--username',
+                        help='GitHub username')
+    parser.add_argument('--password',
+                        help='GitHub password')
     parser.add_argument('--filename',
                         help='filename for the output figure',
                         default='git-issues.png')
@@ -489,9 +494,14 @@ if __name__ == "__main__":
     url = args.git_url
 
     # collect github data
+
     if not os.path.exists(csv) or args.collect:
-        username = input('Please enter your Github username: ')
-        password = getpass.getpass('Password: ')
+        if not (args.username or args.password):
+            username = input('Please enter your Github username: ')
+            password = getpass.getpass('Password: ')
+        else:
+            username = args.username
+            password = args.password
         get_data(username, password, url, csv)
     else:
         print('--> reusing %s' % csv)
