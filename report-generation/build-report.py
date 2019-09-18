@@ -24,6 +24,7 @@ git_open = 'open.png'
 resource_size_total = 'hs-res-size-total.png'
 resource_size_by_type = 'hs-res-size-by-type.png'
 all_actions_table = 'hs-all-actions-table.png'
+hs_resource_dois = 'hs-resource-dois.png'
 
 
 def generate_figures(wrkdir):
@@ -174,6 +175,19 @@ def generate_figures(wrkdir):
          '--filename=%s' % resource_size_by_type,
          '--figure-title=Cumulative Resource Size by Type (Monthly Avg)', 
          '-u'])
+
+    ##################
+    # RESOURCES DOIs #
+    ##################
+
+    print('Generating %s' % hs_resource_dois)
+    run(['doi.py',
+         '--working-dir=%s' % wrkdir,
+         '--agg=1M',
+         '--filename=%s' % hs_resource_dois,
+         '--title=Number of DOIs Issued per Month'
+         ])
+
 
 def output_exists(cmd):
     fname = None
@@ -360,6 +374,13 @@ def create_report(wrkdir, report_fn='hs-metrics-report'):
         caption = """The cumulative storage each resource type in
         HydroShare, plotted by the date in which they were created. These
         data are aggregated monthly and then summed cumulatively.
+        """
+        fig.add_caption(caption.replace('\n', ''))
+
+    with doc.create(Figure(position='!htb')) as fig:
+        fig.add_image(hs_resource_dois, width='500px')
+        caption = """The total number of digital object identifiers (DOIs)
+        issued to HydroShare resources per month.
         """
         fig.add_caption(caption.replace('\n', ''))
 
