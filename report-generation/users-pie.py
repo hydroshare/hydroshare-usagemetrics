@@ -1,6 +1,7 @@
 #!/usr/bin/env python3 
 
 import os
+import pytz
 import pandas
 import argparse
 import numpy as np
@@ -110,9 +111,8 @@ def user_types_pie_chart(working_dir, st, et, drop_cols,
 
     # make pie chart
     print('--> making user types pie chart...')
-    fig = plt.figure(figsize=(10, 10))
+    fig, ax = plt.subplots(figsize=(10, 10))
     plt.title(figtitle)
-    ax = plt.axes()
 
     df.percent.plot.pie(ax=ax, labeldistance=1.1)
 
@@ -204,10 +204,10 @@ if __name__ == "__main__":
                         help='output figure name',
                         default='hydroshare-user-types.png')
     parser.add_argument('--st',
-                        help='start time MM-DD-YYYY',
+                        help='start time MM-DD-YYYY, (UTC)',
                         default='01-01-2000')
     parser.add_argument('--et',
-                        help='start time MM-DD-YYYY',
+                        help='start time MM-DD-YYYY, (UTC)',
                         default=datetime.now().strftime('%m-%d-%Y'))
     parser.add_argument('--exclude',
                         help='comma separated list of user types to exclude',
@@ -235,6 +235,10 @@ if __name__ == "__main__":
     except ValueError:
         et = datetime.now()
         print('\tincorrect end date format, using default start date: %s' % et.strftime('%m-%d-%Y'))
+
+    # set timezone for start and end dates
+    st = pytz.utc.localize(st)
+    et = pytz.utc.localize(et)
 
     # check that dat exist
     if not os.path.exists(os.path.join(args.working_dir, 'users.pkl')):

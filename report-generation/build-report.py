@@ -3,13 +3,12 @@
 
 import os
 import sys
-import getpass
 from subprocess import Popen, PIPE
 from datetime import datetime
 from pylatex import Document, Section, Subsection, Figure, Command, NewLine, SmallText, SubFigure, NewPage, Table
 from pylatex.utils import italic, NoEscape
 
-
+# OUTPUT FIGURE NAMES
 users_all_30 = 'hs-users-all-30.png'
 users_all_180 = 'hs-users-all-180.png'
 users_active_180 = 'hs-users-active-180.png'
@@ -30,10 +29,13 @@ hs_resource_dois = 'hs-resource-dois.png'
 def generate_figures(wrkdir):
 
     # collect github credentials
-    git_username =''
-    git_password = ''
-#    git_username = input('Please enter your Github username: ')
-#    git_password = getpass.getpass('Password: ')
+    git_username = os.environ.get('GIT_USER', None)
+    git_password = os.environ.get('GIT_PASS', None)
+
+    if git_username is None or git_password is None:
+        print('\nWARNING: Could not find GitHub credentials. These are '
+              ' required for running GIT metrics scripts. '
+              'Set GIT_USER and GIT_PASS to enable git metrics\n')
 
     # collect data
     print('Collecting data')
@@ -42,7 +44,7 @@ def generate_figures(wrkdir):
     #########
     # USERS #
     #########
-    print('Generating %s' % users_all_30)
+    print('\nGenerating %s' % users_all_30)
     run(['users.py',
          '--working-dir=%s' % wrkdir,
          '--active-range=30',
@@ -51,7 +53,7 @@ def generate_figures(wrkdir):
          '--step=10',
          '-tan'])
 
-    print('Generating %s' % users_all_180)
+    print('\nGenerating %s' % users_all_180)
     run(['users.py',
          '--working-dir=%s' % wrkdir,
          '--active-range=180',
@@ -60,7 +62,7 @@ def generate_figures(wrkdir):
          '--step=10',
          '-tan'])
 
-    print('Generating %s' % users_active_180)
+    print('\nGenerating %s' % users_active_180)
     run(['users.py',
          '--working-dir=%s' % wrkdir,
          '--active-range=180',
@@ -69,7 +71,7 @@ def generate_figures(wrkdir):
          '--step=10',
          '-anr'])
 
-    print('Generating %s' % users_types)
+    print('\nGenerating %s' % users_types)
     run(['users-pie.py',
          '--working-dir=%s' % wrkdir,
          '--filename=%s' % users_types,
@@ -77,7 +79,7 @@ def generate_figures(wrkdir):
          '--figure-title=Distribution of User Types',
          '-p'])
 
-    print('Generating %s' % users_specified)
+    print('\nGenerating %s' % users_specified)
     run(['users-pie.py',
          '--working-dir=%s' % wrkdir,
          '--filename=%s' % users_specified,
@@ -87,14 +89,14 @@ def generate_figures(wrkdir):
     #############
     # DOWNLOADS #
     #############
-    print('Generating %s' % downloads_unknown)
+    print('\nGenerating %s' % downloads_unknown)
     run(['activity-pie.py',
          '--working-dir=%s' % wrkdir,
          '--filename=%s' % downloads_unknown,
          '--figure-title=Overview of HydroShare Resource Downloads',
          '-u'])
 
-    print('Generating %s' % downloads_known)
+    print('\nGenerating %s' % downloads_known)
     run(['activity-pie.py',
          '--working-dir=%s' % wrkdir,
          '--filename=%s' % downloads_known,
@@ -104,7 +106,7 @@ def generate_figures(wrkdir):
     #################
     # ORGANIZATIONS #
     #################
-    print('Generating %s' % org_all)
+    print('\nGenerating %s' % org_all)
     run(['organizations.py',
          '--working-dir=%s' % wrkdir,
          '--agg=1D',
@@ -112,7 +114,7 @@ def generate_figures(wrkdir):
          '--title=Total Cumulative Unique Organizations',
          '-a'])
 
-    print('Generating %s' % org_cuahsi)
+    print('\nGenerating %s' % org_cuahsi)
     run(['organizations.py',
          '--working-dir=%s' % wrkdir,
          '--agg=1D',
@@ -123,7 +125,7 @@ def generate_figures(wrkdir):
     ###########
     # ACTIONS #
     ###########
-    print('Generating %s' % all_actions_table)
+    print('\nGenerating %s' % all_actions_table)
     run(['activity.py',
          '--working-dir=%s' % wrkdir,
          '--agg=Q',
@@ -133,17 +135,18 @@ def generate_figures(wrkdir):
     ##########
     # GITHUB #
     ##########
-    print('Generating %s' % git_open_closed)
-    run(['git.py',
-         '--working-dir=%s' % wrkdir,
-         '--username=%s' % git_username,
-         '--password=%s' % git_password,
-         '--plot-type=bar',
-         '--agg=3M',
-         '--st=01-01-2014',
-         '--filename=%s' % git_open_closed,
-         '--figure-title=Summary of Opened and Closed Issues',
-         '-co'])
+    if git_username is not None and git_password is not None:
+        print('\nGenerating %s' % git_open_closed)
+        run(['git.py',
+             '--working-dir=%s' % wrkdir,
+             '--username=%s' % git_username,
+             '--password=%s' % git_password,
+             '--plot-type=bar',
+             '--agg=3M',
+             '--st=01-01-2014',
+             '--filename=%s' % git_open_closed,
+             '--figure-title=Summary of Opened and Closed Issues',
+             '-co'])
 
 #    print('Generating %s' % git_open)
 #    run(['git.py',
@@ -158,7 +161,7 @@ def generate_figures(wrkdir):
     #############
     # RESOURCES #
     #############
-    print('Generating %s' % resource_size_total)
+    print('\nGenerating %s' % resource_size_total)
     run(['resources.py',
          '--working-dir=%s' % wrkdir,
          '--aggregation=1M',
@@ -167,7 +170,7 @@ def generate_figures(wrkdir):
          '--figure-title=Cumulative Resource Size all Types (Monthly Avg)', 
          '-t'])
 
-    print('Generating %s' % resource_size_by_type)
+    print('\nGenerating %s' % resource_size_by_type)
     run(['resources.py',
          '--working-dir=%s' % wrkdir,
          '--aggregation=1M',
@@ -180,12 +183,14 @@ def generate_figures(wrkdir):
     # RESOURCES DOIs #
     ##################
 
-    print('Generating %s' % hs_resource_dois)
+    print('\nGenerating %s' % hs_resource_dois)
     run(['doi.py',
          '--working-dir=%s' % wrkdir,
          '--agg=1M',
          '--filename=%s' % hs_resource_dois,
-         '--title=Number of DOIs Issued per Month'
+         '--title=Number of DOIs Issued per Month',
+         '--bar-width=10',
+         '--annotate'
          ])
 
 

@@ -2,6 +2,7 @@
 
 import os
 import csv
+import pytz
 import pandas
 import argparse
 import numpy as np
@@ -105,7 +106,7 @@ def total_resources_by_type(working_dir, st, et, agg='1D'):
         dfs.append(dat)
 
     # join all the data frames together along a common index
-    df = pandas.concat(dfs)
+    df = pandas.concat(dfs, sort=False)
 
     # fill N/A and calculate cumulative resource sizes
     df = df.fillna(0)
@@ -119,10 +120,9 @@ def plot_line(df, filename, **kwargs):
 
     # create figure of these data
     print('--> making figure...')
-    fig = plt.figure(figsize=(12, 9))
+    fig, ax = plt.subplots(figsize=(12, 9))
     plt.xticks(rotation=45)
     plt.subplots_adjust(bottom=0.25)
-    ax = plt.axes()
 
     df.plot(ax=ax)
 
@@ -147,10 +147,9 @@ def plot_stacked(df, filename, **kwargs):
 
     # create figure of these data
     print('--> making figure...')
-    fig = plt.figure(figsize=(12, 9))
+    fig, ax = plt.subplots(figsize=(12, 9))
     plt.xticks(rotation=45)
     plt.subplots_adjust(bottom=0.25)
-    ax = plt.axes()
 
     df.plot.area(ax=ax, linewidth=0, colormap="nipy_spectral")
 
@@ -232,6 +231,10 @@ if __name__ == "__main__":
 
     ######### check date formats #########
     st, et = validate_inputs(args.working_dir, args.st, args.et)
+
+    # set timezone to UTC
+    st = pytz.utc.localize(st)
+    et = pytz.utc.localize(et)
 
     plots = []
     if args.t:

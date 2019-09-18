@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 
 import os
+import pytz
 import pandas
 import argparse
 from datetime import datetime
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
+from pandas.plotting import register_matplotlib_converters
+register_matplotlib_converters()
 
 
 class PlotObject(object):
@@ -101,10 +104,9 @@ def plot(plotObjs_ax1, filename, plotObjs_ax2=[], *args, **kwargs):
 
     # create figure of these data
     print('--> making figure...')
-    fig = plt.figure(figsize=(12, 9))
+    fig, ax = plt.subplots(figsize=(12, 9))
     plt.xticks(rotation=45)
     plt.subplots_adjust(bottom=0.25)
-    ax = plt.axes()
 
     # set plot attributes
     for k, v in kwargs.items():
@@ -249,10 +251,10 @@ if __name__ == "__main__":
                         help='path to directory containing elasticsearch data',
                         required=True)
     parser.add_argument('--st',
-                        help='reporting start date MM-DD-YYYY',
+                        help='reporting start date MM-DD-YYYY (UTC)',
                         default='01-01-2000')
     parser.add_argument('--et',
-                        help='reporting end date MM-DD-YYYY',
+                        help='reporting end date MM-DD-YYYY (UTC)',
                         default=datetime.now().strftime('%m-%d-%Y'))
     parser.add_argument('--title',
                         help='title for the output figure',
@@ -278,6 +280,10 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     st, et = validate_inputs(args.working_dir, args.st, args.et)
+
+    # set timezone to UTC
+    st = pytz.utc.localize(st)
+    et = pytz.utc.localize(et)
 
     plots = []
     if args.a:

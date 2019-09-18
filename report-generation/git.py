@@ -382,10 +382,9 @@ def plot(plotObjs_ax1, filename, plotObjs_ax2=[],
 
     # create figure of these data
     print('--> making figure...')
-    fig = plt.figure(figsize=(12, 9))
+    fig, ax = plt.subplots(figsize=(12, 9))
     plt.xticks(rotation=45)
     plt.subplots_adjust(bottom=0.25)
-    ax = plt.axes()
 
     # set plot attributes
     for k, v in kwargs.items():
@@ -396,9 +395,11 @@ def plot(plotObjs_ax1, filename, plotObjs_ax2=[],
         for p in plotObjs_ax1:
             data[p.label] = p.y
         data['date'] = plotObjs_ax1[0].x
+
         df = pandas.DataFrame(data)
-        df = df.set_index(pandas.to_datetime(df.date))
-        df.plot.bar(df.index, ax=ax)
+        df.set_index('date', inplace=True)
+        df.index = pandas.to_datetime(df.index)
+        df.plot.bar(ax=ax)
 
         fig.autofmt_xdate()
         new_label = []
@@ -573,4 +574,3 @@ if __name__ == "__main__":
         else:
             print('Unsupported plot type: %s' % t[0])
             sys.exit(1)
-

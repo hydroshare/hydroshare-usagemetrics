@@ -1,12 +1,15 @@
 #!/usr/bin/env python3 
 
 import os
+import pytz
 import pandas
 import argparse
 from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
+from pandas.plotting import register_matplotlib_converters
+register_matplotlib_converters()
 
 class PlotObject(object):
     def __init__(self, x, y, label='', style='b-'):
@@ -91,7 +94,7 @@ def total_users(working_dir, st, et, step):
     # group and cumsum
     df = df.sort_index()
     grp = '%dd' % step
-    ds = df.groupby(pandas.TimeGrouper(grp)).count().usr_id.cumsum()
+    ds = df.groupby(pandas.Grouper(freq=grp)).count().usr_id.cumsum()
 
     ds = subset_by_date(ds, st, et)
 
@@ -237,10 +240,9 @@ def plot(plotObjs_ax1, filename, plotObjs_ax2=[], **kwargs):
 
     # create figure of these data
     print('--> making figure...')
-    fig = plt.figure(figsize=(12, 9))
+    fig, ax = plt.subplots(figsize=(12, 9))
     plt.xticks(rotation=45)
     plt.subplots_adjust(bottom=0.25)
-    ax = plt.axes()
 
     # set plot attributes
     for k, v in kwargs.items():
@@ -286,10 +288,10 @@ if __name__ == "__main__":
                         help='filename for the output figure',
                         default='hydroshare-users.png')
     parser.add_argument('--st',
-                        help='start time MM-DD-YYYY',
+                        help='start time MM-DD-YYYY (UTC)',
                         default='01-01-2000')
     parser.add_argument('--et',
-                        help='start time MM-DD-YYYY',
+                        help='start time MM-DD-YYYY (UTC)',
                         default=datetime.now().strftime('%m-%d-%Y'))
     parser.add_argument('-t',
                         help='plot total users line',
@@ -318,6 +320,10 @@ if __name__ == "__main__":
     except ValueError:
         et = datetime.now()
         print('\tincorrect end date format, using default start date: %s' % et.strftime('%m-%d-%Y'))
+
+    # set timezone to UTC
+    st = pytz.utc.localize(st)
+    et = pytz.utc.localize(et)
 
     # check that dat exist
     if not os.path.exists(os.path.join(args.working_dir, 'activity.pkl')):

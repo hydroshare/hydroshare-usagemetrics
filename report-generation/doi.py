@@ -10,6 +10,9 @@ import hs_restclient as hsapi
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
+from pandas.plotting import register_matplotlib_converters
+register_matplotlib_converters()
+
 
 class Timeout():
     """Timeout class using ALARM signal."""
@@ -99,17 +102,28 @@ def collect_resource_ids(hs):
     return df
 
 
-def plot_line(df, filename, title='', agg='1M', **kwargs):
+def plot_line(df, filename, title='',
+              agg='1M', width=.5, annotate=False,
+              **kwargs):
 
     # create figure of these data
-    fig = plt.figure(figsize=(12, 9))
-    ax = plt.axes()
+    fig, ax = plt.subplots(figsize=(12, 9))
 
     df['Published Resource Count'] = df.resource_count
     df = df.groupby(pd.Grouper(key="Date Published", freq=agg))
     df = df.sum().fillna(0)
 
-    ax.bar(df.index, df['Published Resource Count'], width=10)
+    ax.bar(df.index, df['Published Resource Count'], width=width)
+
+    if annotate:
+        for p in ax.patches:
+            ax.annotate("%.2f" % p.get_height(),
+                        (p.get_x() + p.get_width() / 2.,
+                         p.get_height()),
+                        ha='center',
+                        va='center',
+                        xytext=(0, 10),
+                        textcoords='offset points')
 
     # set plot attributes
     for k, v in kwargs.items():
@@ -149,6 +163,14 @@ if __name__ == "__main__":
     parser.add_argument('--title',
                         help='figure title',
                         default='HydroShare Published Resources')
+    parser.add_argument('--bar-width',
+                        help='width of bars in the plot',
+                        type=float,
+                        default=.5)
+    parser.add_argument('--annotate',
+                        help='turn on bar plot annotations',
+                        action='store_true',
+                        default=False)
 
     args = parser.parse_args()
 
@@ -183,7 +205,9 @@ if __name__ == "__main__":
     plot_line(df,
               outpath,
               title=args.title,
-              agg=args.agg)
+              agg=args.agg,
+              width=args.bar_width,
+              annotate=args.annotate)
 
     print('SUCCESS')
 

@@ -68,7 +68,8 @@ def activity_table(working_dir, agg='Q'):
 
     # remove the action column since its been divided into
     # individual columns
-    df.drop('action', inplace=True)
+    df.drop('action', axis=1, inplace=True)
+    df = df.loc[:, df.columns.notnull()]
 
     df = df.groupby(pandas.Grouper(freq=agg)).sum()
 
@@ -234,10 +235,9 @@ def plot(plotObjs_ax1, filename, plotObjs_ax2=[], **kwargs):
 
     # create figure of these data
     print('--> making figure...')
-    fig = plt.figure(figsize=(12, 9))
+    fig, ax = plt.subplots(figsize=(12, 9))
     plt.xticks(rotation=45)
     plt.subplots_adjust(bottom=0.25)
-    ax = plt.axes()
 
     # set plot attributes
     for k, v in kwargs.items():
