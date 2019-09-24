@@ -31,11 +31,11 @@ def generate_figures(wrkdir):
 #    # collect github credentials
 #    git_username = os.environ.get('GIT_USER', None)
 #    git_password = os.environ.get('GIT_PASS', None)
-
-    if git_username is None or git_password is None:
-        print('\nWARNING: Could not find GitHub credentials. These are '
-              ' required for running GIT metrics scripts. '
-              'Set GIT_USER and GIT_PASS to enable git metrics\n')
+#
+#    if git_username is None or git_password is None:
+#        print('\nWARNING: Could not find GitHub credentials. These are '
+#              ' required for running GIT metrics scripts. '
+#              'Set GIT_USER and GIT_PASS to enable git metrics\n')
 
     # collect data
     print('Collecting data')
@@ -93,14 +93,14 @@ def generate_figures(wrkdir):
     run(['activity-pie.py',
          '--working-dir=%s' % wrkdir,
          '--filename=%s' % downloads_unknown,
-         '--figure-title=Overview of HydroShare Resource Downloads',
+         '--figure-title=',
          '-u'])
 
     print('\nGenerating %s' % downloads_known)
     run(['activity-pie.py',
          '--working-dir=%s' % wrkdir,
          '--filename=%s' % downloads_known,
-         '--figure-title=HydroShare Resource Downloads for Known Users',
+         '--figure-title=',
          '-k'])
 
     #################

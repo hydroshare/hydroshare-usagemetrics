@@ -1,4 +1,4 @@
-#!/usr/bin/env python3 
+#!/usr/bin/env python3
 
 import os
 import pytz
@@ -107,7 +107,46 @@ def downloads_by_type(working_dir, st, et, drop_cols,
     fig, ax = plt.subplots(figsize=(10, 10))
     plt.title(figtitle)
 
-    df.percent.plot.pie(ax=ax, labeldistance=1.05)
+    # remove where percentage is 0.00
+    df = df[df.score > 0]
+    df = df.sort_values(by='percent', ascending=False)
+
+    labels = list(df.index)
+    values = list(df.percent)
+
+    # hard coded: move undergrad away from com/professional b/c they overlap
+    idx = len(labels) - 1
+    labels.insert(2, labels.pop(idx))
+    values.insert(2, values.pop(idx))
+
+    ax.pie(values, labels=labels)
+#    pi = df.percent.plot.pie(ax=ax, explode=explode, labeldistance=1.1, startangle=10)
+
+#    bbox_props = dict(boxstyle="square,pad=0.5", fc="w", ec="k", lw=0)
+#    kw = dict(arrowprops=dict(arrowstyle="-"),
+#              bbox=bbox_props, zorder=0, va="center")
+#    texts = [t for t in pi.texts]
+#
+#    import pdb; pdb.set_trace()
+#    total_patches = len(pi.patches)
+#    pop_idx = 0
+#    for i in range(0, total_patches):
+#        p = pi.patches[i]
+#        text = pi.texts.pop(pop_idx)
+##        if text.get_text() == '':
+##            continue
+#        pop_idx += 1
+#
+#        ang = (p.theta2 - p.theta1)/2. + p.theta1
+#        y = np.sin(np.deg2rad(ang))
+#        x = np.cos(np.deg2rad(ang))
+#        horizontalalignment = {-1: "right", 1: "left"}[int(np.sign(x))]
+#        connectionstyle = "angle,angleA=0,angleB={}".format(ang)
+#        kw["arrowprops"].update({"connectionstyle": connectionstyle})
+#
+#        ax.annotate(text.get_text(), xy=(x, y),
+#                    xytext=(1.35*np.sign(x), 1.4*y),
+#                    horizontalalignment=horizontalalignment, **kw)
 
     plt.xlabel('')
     plt.ylabel('')
