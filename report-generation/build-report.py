@@ -132,7 +132,7 @@ def generate_figures(wrkdir):
              '--working-dir=%s' % wrkdir,
              '--agg=Q',
              '--filename=%s' % all_actions_table,
-             '-t']
+             '-t'])
 
     #    ##########
     #    # GITHUB #
