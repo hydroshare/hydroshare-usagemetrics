@@ -70,7 +70,9 @@ def get_es_data(host, port='8080', index='*', query='*', outfile=None,
             if scroll_size > 0:
                 # save the results in a pandas dataframe and append
                 # to previous results
-                df = pandas.concat([df, json_normalize(response['hits']['hits'])])
+                df = pandas.concat([df,
+                                    json_normalize(response['hits']['hits'])],
+                                   sort=False)
             else:
                 break
 
@@ -87,9 +89,9 @@ def get_es_data(host, port='8080', index='*', query='*', outfile=None,
             if doc_size == total_size:
                 break
 
-        except:
+        except Exception:
             print('\nFailed to normalize elasticsearch response.')
-            sys.exit(-1)
+            sys.exit(1)
 
     # clean and trim the pandas table
     for col in df.columns.values:

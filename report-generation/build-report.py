@@ -37,161 +37,167 @@ def generate_figures(wrkdir):
 #              ' required for running GIT metrics scripts. '
 #              'Set GIT_USER and GIT_PASS to enable git metrics\n')
 
-    # collect data
-    print('Collecting data')
-    run(['collect_data.py', '-s'])
+    try:
 
-    #########
-    # USERS #
-    #########
-    print('\nGenerating %s' % users_all_30)
-    run(['users.py',
-         '--working-dir=%s' % wrkdir,
-         '--active-range=30',
-         '--filename=%s' % users_all_30,
-         '--figure-title=',
-         '--step=10',
-         '-tan'])
+        # collect data
+        print('Collecting data')
+        run(['collect_data.py', '-s'])
 
-    print('\nGenerating %s' % users_all_180)
-    run(['users.py',
-         '--working-dir=%s' % wrkdir,
-         '--active-range=180',
-         '--filename=%s' % users_all_180,
-         '--figure-title=',
-         '--step=10',
-         '-tan'])
+        #########
+        # USERS #
+        #########
+        print('\nGenerating %s' % users_all_30)
+        run(['users.py',
+             '--working-dir=%s' % wrkdir,
+             '--active-range=30',
+             '--filename=%s' % users_all_30,
+             '--figure-title=',
+             '--step=10',
+             '-tan'])
 
-    print('\nGenerating %s' % users_active_180)
-    run(['users.py',
-         '--working-dir=%s' % wrkdir,
-         '--active-range=180',
-         '--filename=%s' % users_active_180,
-         '--figure-title=',
-         '--step=10',
-         '-anr'])
+        print('\nGenerating %s' % users_all_180)
+        run(['users.py',
+             '--working-dir=%s' % wrkdir,
+             '--active-range=180',
+             '--filename=%s' % users_all_180,
+             '--figure-title=',
+             '--step=10',
+             '-tan'])
 
-    print('\nGenerating %s' % users_types)
-    run(['users-pie.py',
-         '--working-dir=%s' % wrkdir,
-         '--filename=%s' % users_types,
-         '--exclude=Other,Unspecified',
-         '--figure-title=',
-         '-p'])
+        print('\nGenerating %s' % users_active_180)
+        run(['users.py',
+             '--working-dir=%s' % wrkdir,
+             '--active-range=180',
+             '--filename=%s' % users_active_180,
+             '--figure-title=',
+             '--step=10',
+             '-anr'])
 
-    print('\nGenerating %s' % users_specified)
-    run(['users-pie.py',
-         '--working-dir=%s' % wrkdir,
-         '--filename=%s' % users_specified,
-         '--figure-title=',
-         '-c'])
+        print('\nGenerating %s' % users_types)
+        run(['users-pie.py',
+             '--working-dir=%s' % wrkdir,
+             '--filename=%s' % users_types,
+             '--exclude=Other,Unspecified',
+             '--figure-title=',
+             '-p'])
 
-    #############
-    # DOWNLOADS #
-    #############
-    print('\nGenerating %s' % downloads_unknown)
-    run(['activity-pie.py',
-         '--working-dir=%s' % wrkdir,
-         '--filename=%s' % downloads_unknown,
-         '--figure-title=',
-         '-u'])
+        print('\nGenerating %s' % users_specified)
+        run(['users-pie.py',
+             '--working-dir=%s' % wrkdir,
+             '--filename=%s' % users_specified,
+             '--figure-title=',
+             '-c'])
 
-    print('\nGenerating %s' % downloads_known)
-    run(['activity-pie.py',
-         '--working-dir=%s' % wrkdir,
-         '--filename=%s' % downloads_known,
-         '--figure-title=',
-         '-k'])
+        #############
+        # DOWNLOADS #
+        #############
+        print('\nGenerating %s' % downloads_unknown)
+        run(['activity-pie.py',
+             '--working-dir=%s' % wrkdir,
+             '--filename=%s' % downloads_unknown,
+             '--figure-title=',
+             '-u'])
 
-    #################
-    # ORGANIZATIONS #
-    #################
-    print('\nGenerating %s' % org_all)
-    run(['organizations.py',
-         '--working-dir=%s' % wrkdir,
-         '--agg=1D',
-         '--filename=%s' % org_all,
-         '--title=',
-         '-a'])
+        print('\nGenerating %s' % downloads_known)
+        run(['activity-pie.py',
+             '--working-dir=%s' % wrkdir,
+             '--filename=%s' % downloads_known,
+             '--figure-title=',
+             '-k'])
 
-    print('\nGenerating %s' % org_cuahsi)
-    run(['organizations.py',
-         '--working-dir=%s' % wrkdir,
-         '--agg=1D',
-         '--filename=%s' % org_cuahsi,
-         '--title=',
-         '-uic'])
-    
-    ###########
-    # ACTIONS #
-    ###########
-    print('\nGenerating %s' % all_actions_table)
-    run(['activity.py',
-         '--working-dir=%s' % wrkdir,
-         '--agg=Q',
-         '--filename=%s' % all_actions_table,
-         '-t'])
+        #################
+        # ORGANIZATIONS #
+        #################
+        print('\nGenerating %s' % org_all)
+        run(['organizations.py',
+             '--working-dir=%s' % wrkdir,
+             '--agg=1D',
+             '--filename=%s' % org_all,
+             '--title=',
+             '-a'])
 
-#    ##########
-#    # GITHUB #
-#    ##########
-#    if git_username is not None and git_password is not None:
-#        print('\nGenerating %s' % git_open_closed)
-#        run(['git.py',
-#             '--working-dir=%s' % wrkdir,
-#             '--username=%s' % git_username,
-#             '--password=%s' % git_password,
-#             '--plot-type=bar',
-#             '--agg=3M',
-#             '--st=01-01-2014',
-#             '--filename=%s' % git_open_closed,
-#             '--figure-title=Summary of Opened and Closed Issues',
-#             '-aco'])
-#
-#    print('Generating %s' % git_open)
-#    run(['git.py',
-#         '--working-dir=%s' % wrkdir,
-#         '--plot-type=bar',
-#         '--agg=3M',
-#         '--st=01-01-2014',
-#         '--filename=%s' % git_open,
-#         '--figure-title=Summary of Closed Issues',
-#         '-c'])
+        print('\nGenerating %s' % org_cuahsi)
+        run(['organizations.py',
+             '--working-dir=%s' % wrkdir,
+             '--agg=1D',
+             '--filename=%s' % org_cuahsi,
+             '--title=',
+             '-uic'])
 
-    #############
-    # RESOURCES #
-    #############
-    print('\nGenerating %s' % resource_size_total)
-    run(['resources.py',
-         '--working-dir=%s' % wrkdir,
-         '--aggregation=1M',
-         '--st=01-01-2014',
-         '--filename=%s' % resource_size_total,
-         '--figure-title=Cumulative Resource Size all Types (Monthly Avg)', 
-         '-t'])
+        ###########
+        # ACTIONS #
+        ###########
+        print('\nGenerating %s' % all_actions_table)
+        run(['activity.py',
+             '--working-dir=%s' % wrkdir,
+             '--agg=Q',
+             '--filename=%s' % all_actions_table,
+             '-t'])
 
-    print('\nGenerating %s' % resource_size_by_type)
-    run(['resources.py',
-         '--working-dir=%s' % wrkdir,
-         '--aggregation=1M',
-         '--st=01-01-2014',
-         '--filename=%s' % resource_size_by_type,
-         '--figure-title=Cumulative Resource Size by Type (Monthly Avg)', 
-         '-u'])
+    #    ##########
+    #    # GITHUB #
+    #    ##########
+    #    if git_username is not None and git_password is not None:
+    #        print('\nGenerating %s' % git_open_closed)
+    #        run(['git.py',
+    #             '--working-dir=%s' % wrkdir,
+    #             '--username=%s' % git_username,
+    #             '--password=%s' % git_password,
+    #             '--plot-type=bar',
+    #             '--agg=3M',
+    #             '--st=01-01-2014',
+    #             '--filename=%s' % git_open_closed,
+    #             '--figure-title=Summary of Opened and Closed Issues',
+    #             '-aco'])
+    #
+    #    print('Generating %s' % git_open)
+    #    run(['git.py',
+    #         '--working-dir=%s' % wrkdir,
+    #         '--plot-type=bar',
+    #         '--agg=3M',
+    #         '--st=01-01-2014',
+    #         '--filename=%s' % git_open,
+    #         '--figure-title=Summary of Closed Issues',
+    #         '-c'])
 
-    ##################
-    # RESOURCES DOIs #
-    ##################
+        #############
+        # RESOURCES #
+        #############
+        print('\nGenerating %s' % resource_size_total)
+        run(['resources.py',
+             '--working-dir=%s' % wrkdir,
+             '--aggregation=1M',
+             '--st=01-01-2014',
+             '--filename=%s' % resource_size_total,
+             '--figure-title=Cumulative Resource Size all Types (Monthly Avg)', 
+             '-t'])
 
-    print('\nGenerating %s' % hs_resource_dois)
-    run(['doi.py',
-         '--working-dir=%s' % wrkdir,
-         '--agg=1M',
-         '--filename=%s' % hs_resource_dois,
-         '--title=Number of DOIs Issued per Month',
-         '--bar-width=10',
-         '--annotate'
-         ])
+        print('\nGenerating %s' % resource_size_by_type)
+        run(['resources.py',
+             '--working-dir=%s' % wrkdir,
+             '--aggregation=1M',
+             '--st=01-01-2014',
+             '--filename=%s' % resource_size_by_type,
+             '--figure-title=Cumulative Resource Size by Type (Monthly Avg)', 
+             '-u'])
+
+        ##################
+        # RESOURCES DOIs #
+        ##################
+
+        print('\nGenerating %s' % hs_resource_dois)
+        run(['doi.py',
+             '--working-dir=%s' % wrkdir,
+             '--agg=1M',
+             '--filename=%s' % hs_resource_dois,
+             '--title=Number of DOIs Issued per Month',
+             '--bar-width=10',
+             '--annotate'
+             ])
+
+    except Exception as e:
+        print(f'An error occurred: {e}')
+        sys.exit(1)
 
 
 def output_exists(cmd):
