@@ -46,7 +46,7 @@ def generate_figures(wrkdir):
         #########
         # USERS #
         #########
-        print('\nGenerating %s' % users_all_30)
+        print('\nGenerating %s' % users_all_30, flush=True)
         run(['users.py',
              '--working-dir=%s' % wrkdir,
              '--active-range=30',
@@ -55,7 +55,7 @@ def generate_figures(wrkdir):
              '--step=10',
              '-tan'])
 
-        print('\nGenerating %s' % users_all_180)
+        print('\nGenerating %s' % users_all_180, flush=True)
         run(['users.py',
              '--working-dir=%s' % wrkdir,
              '--active-range=180',
@@ -64,7 +64,7 @@ def generate_figures(wrkdir):
              '--step=10',
              '-tan'])
 
-        print('\nGenerating %s' % users_active_180)
+        print('\nGenerating %s' % users_active_180, flush=True)
         run(['users.py',
              '--working-dir=%s' % wrkdir,
              '--active-range=180',
@@ -73,7 +73,7 @@ def generate_figures(wrkdir):
              '--step=10',
              '-anr'])
 
-        print('\nGenerating %s' % users_types)
+        print('\nGenerating %s' % users_types, flush=True)
         run(['users-pie.py',
              '--working-dir=%s' % wrkdir,
              '--filename=%s' % users_types,
@@ -81,7 +81,7 @@ def generate_figures(wrkdir):
              '--figure-title=',
              '-p'])
 
-        print('\nGenerating %s' % users_specified)
+        print('\nGenerating %s' % users_specified, flush=True)
         run(['users-pie.py',
              '--working-dir=%s' % wrkdir,
              '--filename=%s' % users_specified,
@@ -91,14 +91,14 @@ def generate_figures(wrkdir):
         #############
         # DOWNLOADS #
         #############
-        print('\nGenerating %s' % downloads_unknown)
+        print('\nGenerating %s' % downloads_unknown, flush=True)
         run(['activity-pie.py',
              '--working-dir=%s' % wrkdir,
              '--filename=%s' % downloads_unknown,
              '--figure-title=',
              '-u'])
 
-        print('\nGenerating %s' % downloads_known)
+        print('\nGenerating %s' % downloads_known, flush=True)
         run(['activity-pie.py',
              '--working-dir=%s' % wrkdir,
              '--filename=%s' % downloads_known,
@@ -108,7 +108,7 @@ def generate_figures(wrkdir):
         #################
         # ORGANIZATIONS #
         #################
-        print('\nGenerating %s' % org_all)
+        print('\nGenerating %s' % org_all, flush=True)
         run(['organizations.py',
              '--working-dir=%s' % wrkdir,
              '--agg=1D',
@@ -116,7 +116,7 @@ def generate_figures(wrkdir):
              '--title=',
              '-a'])
 
-        print('\nGenerating %s' % org_cuahsi)
+        print('\nGenerating %s' % org_cuahsi, flush=True)
         run(['organizations.py',
              '--working-dir=%s' % wrkdir,
              '--agg=1D',
@@ -127,12 +127,12 @@ def generate_figures(wrkdir):
         ###########
         # ACTIONS #
         ###########
-        print('\nGenerating %s' % all_actions_table)
+        print('\nGenerating %s' % all_actions_table, flush=True)
         run(['activity.py',
              '--working-dir=%s' % wrkdir,
              '--agg=Q',
              '--filename=%s' % all_actions_table,
-             '-t'])
+             '-t']
 
     #    ##########
     #    # GITHUB #
@@ -163,7 +163,7 @@ def generate_figures(wrkdir):
         #############
         # RESOURCES #
         #############
-        print('\nGenerating %s' % resource_size_total)
+        print('\nGenerating %s' % resource_size_total, flush=True)
         run(['resources.py',
              '--working-dir=%s' % wrkdir,
              '--aggregation=1M',
@@ -172,7 +172,7 @@ def generate_figures(wrkdir):
              '--figure-title=Cumulative Resource Size all Types (Monthly Avg)', 
              '-t'])
 
-        print('\nGenerating %s' % resource_size_by_type)
+        print('\nGenerating %s' % resource_size_by_type, flush=True)
         run(['resources.py',
              '--working-dir=%s' % wrkdir,
              '--aggregation=1M',
@@ -185,7 +185,7 @@ def generate_figures(wrkdir):
         # RESOURCES DOIs #
         ##################
 
-        print('\nGenerating %s' % hs_resource_dois)
+        print('\nGenerating %s' % hs_resource_dois, flush=True)
         run(['doi.py',
              '--working-dir=%s' % wrkdir,
              '--agg=1M',
