@@ -198,6 +198,11 @@ if __name__ == "__main__":
     pwd = args.password
     host = args.host
 
+    print(wrkdir)
+    print(host)
+    print(uname)
+    print(pwd)
+
     while wrkdir is None:
         wrkdir = input('Enter working directory: ') or None
         if not os.path.exists(wrkdir):
