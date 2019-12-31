@@ -86,23 +86,29 @@ if __name__ == '__main__':
                         help='skip data collection if it already exists',
                         action='store_true',
                         default=False)
+    parser.add_argument('-d',
+                        help='directory to save data',
+                        default=datetime.now().strftime('%m.%d.%Y'))
+
     args = parser.parse_args()
 
     # create a directory for these data
-    dirname = datetime.now().strftime('%m.%d.%Y')
-    
+    datadir = args.d
+
     if args.s:
-        if os.path.exists(dirname):
+        if os.path.exists(datadir):
             print('Directory already exists, skipping')
             sys.exit(0)
 
     i = 2
-    while os.path.exists(dirname):
-        dirname = dirname[:10] + '_%d' % i
+    while os.path.exists(datadir):
+        dirs = datadir.split()
+        dirs[0] = dirs[0][:10] + '_%d' % i
         i += 1
-    os.makedirs(dirname)
+        datadir = '/'.join(dirs)
+    os.makedirs(datadir)
 
-    print('Metrics will be saved into: %s' % dirname)
+    print('Metrics will be saved into: %s' % datadir)
 
-    data = get_stats_data(dirname=dirname)
+    data = get_stats_data(dirname=datadir)
 

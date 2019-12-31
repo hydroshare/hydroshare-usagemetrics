@@ -325,6 +325,7 @@ if __name__ == "__main__":
     st = pytz.utc.localize(st)
     et = pytz.utc.localize(et)
 
+    print(args.working_dir)
     # check that dat exist
     if not os.path.exists(os.path.join(args.working_dir, 'activity.pkl')):
         print('\n\tcould not find \'activity.pkl\', skipping.'

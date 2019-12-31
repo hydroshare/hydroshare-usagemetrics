@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 
 
-import os
 import sys
+import shutil
+from os import remove, makedirs
+from os.path import abspath, join, exists
 from subprocess import Popen, PIPE
 from datetime import datetime
-from pylatex import Document, Section, Subsection, Figure, Command, NewLine, SmallText, SubFigure, NewPage, Table
-from pylatex.utils import italic, NoEscape
+from pylatex import Document, Figure, Command
+from pylatex.utils import NoEscape
+
 
 # OUTPUT FIGURE NAMES
 users_all_30 = 'hs-users-all-30.png'
@@ -26,22 +29,13 @@ all_actions_table = 'hs-all-actions-table.png'
 hs_resource_dois = 'hs-resource-dois.png'
 
 
-def generate_figures(wrkdir):
-
-#    # collect github credentials
-#    git_username = os.environ.get('GIT_USER', None)
-#    git_password = os.environ.get('GIT_PASS', None)
-#
-#    if git_username is None or git_password is None:
-#        print('\nWARNING: Could not find GitHub credentials. These are '
-#              ' required for running GIT metrics scripts. '
-#              'Set GIT_USER and GIT_PASS to enable git metrics\n')
+def generate_figures(wrkdir, figdir):
 
     try:
 
         # collect data
         print('Collecting data')
-        run(['collect_data.py', '-s'])
+        run(['collect_data.py', '-s', '-d', wrkdir])
 
         #########
         # USERS #
@@ -50,7 +44,7 @@ def generate_figures(wrkdir):
         run(['users.py',
              '--working-dir=%s' % wrkdir,
              '--active-range=30',
-             '--filename=%s' % users_all_30,
+             '--filename=%s/%s' % (figdir, users_all_30),
              '--figure-title=',
              '--step=10',
              '-tan'])
@@ -59,7 +53,7 @@ def generate_figures(wrkdir):
         run(['users.py',
              '--working-dir=%s' % wrkdir,
              '--active-range=180',
-             '--filename=%s' % users_all_180,
+             '--filename=%s/%s' % (figdir, users_all_180),
              '--figure-title=',
              '--step=10',
              '-tan'])
@@ -68,7 +62,7 @@ def generate_figures(wrkdir):
         run(['users.py',
              '--working-dir=%s' % wrkdir,
              '--active-range=180',
-             '--filename=%s' % users_active_180,
+             '--filename=%s/%s' % (figdir, users_active_180),
              '--figure-title=',
              '--step=10',
              '-anr'])
@@ -76,7 +70,7 @@ def generate_figures(wrkdir):
         print('\nGenerating %s' % users_types, flush=True)
         run(['users-pie.py',
              '--working-dir=%s' % wrkdir,
-             '--filename=%s' % users_types,
+             '--filename=%s/%s' % (figdir, users_types),
              '--exclude=Other,Unspecified',
              '--figure-title=',
              '-p'])
@@ -84,7 +78,7 @@ def generate_figures(wrkdir):
         print('\nGenerating %s' % users_specified, flush=True)
         run(['users-pie.py',
              '--working-dir=%s' % wrkdir,
-             '--filename=%s' % users_specified,
+             '--filename=%s/%s' % (figdir, users_specified),
              '--figure-title=',
              '-c'])
 
@@ -94,14 +88,14 @@ def generate_figures(wrkdir):
         print('\nGenerating %s' % downloads_unknown, flush=True)
         run(['activity-pie.py',
              '--working-dir=%s' % wrkdir,
-             '--filename=%s' % downloads_unknown,
+             '--filename=%s/%s' % (figdir, downloads_unknown),
              '--figure-title=',
              '-u'])
 
         print('\nGenerating %s' % downloads_known, flush=True)
         run(['activity-pie.py',
              '--working-dir=%s' % wrkdir,
-             '--filename=%s' % downloads_known,
+             '--filename=%s/%s' % (figdir, downloads_known),
              '--figure-title=',
              '-k'])
 
@@ -112,7 +106,7 @@ def generate_figures(wrkdir):
         run(['organizations.py',
              '--working-dir=%s' % wrkdir,
              '--agg=1D',
-             '--filename=%s' % org_all,
+             '--filename=%s/%s' % (figdir, org_all),
              '--title=',
              '-a'])
 
@@ -120,7 +114,7 @@ def generate_figures(wrkdir):
         run(['organizations.py',
              '--working-dir=%s' % wrkdir,
              '--agg=1D',
-             '--filename=%s' % org_cuahsi,
+             '--filename=%s/%s' % (figdir, org_cuahsi),
              '--title=',
              '-uic'])
 
@@ -131,34 +125,8 @@ def generate_figures(wrkdir):
         run(['activity.py',
              '--working-dir=%s' % wrkdir,
              '--agg=Q',
-             '--filename=%s' % all_actions_table,
+             '--filename=%s/%s' % (figdir, all_actions_table),
              '-t'])
-
-    #    ##########
-    #    # GITHUB #
-    #    ##########
-    #    if git_username is not None and git_password is not None:
-    #        print('\nGenerating %s' % git_open_closed)
-    #        run(['git.py',
-    #             '--working-dir=%s' % wrkdir,
-    #             '--username=%s' % git_username,
-    #             '--password=%s' % git_password,
-    #             '--plot-type=bar',
-    #             '--agg=3M',
-    #             '--st=01-01-2014',
-    #             '--filename=%s' % git_open_closed,
-    #             '--figure-title=Summary of Opened and Closed Issues',
-    #             '-aco'])
-    #
-    #    print('Generating %s' % git_open)
-    #    run(['git.py',
-    #         '--working-dir=%s' % wrkdir,
-    #         '--plot-type=bar',
-    #         '--agg=3M',
-    #         '--st=01-01-2014',
-    #         '--filename=%s' % git_open,
-    #         '--figure-title=Summary of Closed Issues',
-    #         '-c'])
 
         #############
         # RESOURCES #
@@ -168,8 +136,8 @@ def generate_figures(wrkdir):
              '--working-dir=%s' % wrkdir,
              '--aggregation=1M',
              '--st=01-01-2014',
-             '--filename=%s' % resource_size_total,
-             '--figure-title=Cumulative Resource Size all Types (Monthly Avg)', 
+             '--filename=%s/%s' % (figdir, resource_size_total),
+             '--figure-title=Cumulative Resource Size all Types (Monthly Avg)',
              '-t'])
 
         print('\nGenerating %s' % resource_size_by_type, flush=True)
@@ -177,8 +145,8 @@ def generate_figures(wrkdir):
              '--working-dir=%s' % wrkdir,
              '--aggregation=1M',
              '--st=01-01-2014',
-             '--filename=%s' % resource_size_by_type,
-             '--figure-title=Cumulative Resource Size by Type (Monthly Avg)', 
+             '--filename=%s/%s' % (figdir, resource_size_by_type),
+             '--figure-title=Cumulative Resource Size by Type (Monthly Avg)',
              '-u'])
 
         ##################
@@ -189,7 +157,7 @@ def generate_figures(wrkdir):
         run(['doi.py',
              '--working-dir=%s' % wrkdir,
              '--agg=1M',
-             '--filename=%s' % hs_resource_dois,
+             '--filename=%s/%s' % (figdir, hs_resource_dois),
              '--title=Number of DOIs Issued per Month',
              '--bar-width=10',
              '--annotate'
@@ -202,12 +170,15 @@ def generate_figures(wrkdir):
 
 def output_exists(cmd):
     fname = None
+    wrk = ''
     for c in cmd:
         if '--filename' in c:
             fname = c.split('=')[-1]
-            break
+        if '--working-dir' in c:
+            wrk = c.split('=')[-1]
+
     if fname is not None:
-        if os.path.exists(os.path.join(wrkdir, fname)):
+        if exists(join(wrk, fname)):
             return True
     return False
 
@@ -222,14 +193,14 @@ def run(command):
     p = Popen(cmd, stderr=PIPE)
     while True:
         out = p.stderr.read(1).decode('utf-8')
-        if out == '' and p.poll() != None:
+        if out == '' and p.poll() is not None:
             break
         if out != '':
             sys.stdout.write(out)
             sys.stdout.flush()
 
 
-def create_report(wrkdir, report_fn='hs-metrics-report'):
+def create_report(wrkdir, figdir='.', report_fn='hs-metrics-report'):
 
     # Create document and title
     geometry_options = {
@@ -241,18 +212,19 @@ def create_report(wrkdir, report_fn='hs-metrics-report'):
     doc.packages.append(NoEscape(r'\usepackage[section]{placeins}'))
 
     doc.preamble.append(NoEscape(r'\title{HydroShare Usage Metrics Report' +
-                        r'\\ \normalsize Autogenerated report ' + 
-                        r'\\ \normalsize Tony Castronova <acastronova@cuahsi.org> }'))
+                                 r'\\ \normalsize Autogenerated report ' +
+                                 r'\\ \normalsize Tony Castronova ' +
+                                 '<acastronova@cuahsi.org> }'))
     doc.preamble.append(Command('date', NoEscape(r'\today')))
     doc.append(NoEscape(r'\maketitle'))
 
     # clean old report files
-    report_tex = os.path.join(report_fn, 'tex')
-    report_pdf = os.path.join(report_fn, 'pdf')
-    if os.path.exists(report_tex):
-        os.remove(report_tex)
-    if os.path.exists(report_pdf):
-        os.remove(report_pdf)
+    report_tex = join(report_fn, 'tex')
+    report_pdf = join(report_fn, 'pdf')
+    if exists(report_tex):
+        remove(report_tex)
+    if exists(report_pdf):
+        remove(report_pdf)
 
     caption = """
     This document contains figures and statistics about
@@ -267,7 +239,8 @@ def create_report(wrkdir, report_fn='hs-metrics-report'):
     doc.append(caption.replace('\n', ''))
 
     with doc.create(Figure(position='!htb')) as fig:
-        fig.add_image(users_all_30, width=NoEscape(r'\linewidth'))
+        fig.add_image(abspath(join(figdir, users_all_30)),
+                      width=NoEscape(r'\linewidth'))
         caption = """
         (1) Total cumulative HydroShare accounts through time
         based on the date each account was created, (2) active accounts
@@ -280,7 +253,8 @@ def create_report(wrkdir, report_fn='hs-metrics-report'):
         fig.add_caption(caption.replace('\n', ''))
 
     with doc.create(Figure(position='!htb')) as fig:
-        fig.add_image(users_all_180, width=NoEscape(r'\linewidth'))
+        fig.add_image(abspath(join(figdir, users_all_180)),
+                      width=NoEscape(r'\linewidth'))
         caption = """
         (1) Total cumulative HydroShare accounts
         through time based on the date each account is created,
@@ -293,7 +267,8 @@ def create_report(wrkdir, report_fn='hs-metrics-report'):
         fig.add_caption(caption.replace('\n', ''))
 
     with doc.create(Figure(position='!htb')) as fig:
-        fig.add_image(users_active_180, width=NoEscape(r'\linewidth'))
+        fig.add_image(abspath(join(figdir, users_active_180)),
+                      width=NoEscape(r'\linewidth'))
         caption = """
         (1) Active accounts defined as users that
         have logged into HydroShare within the last 180 days, (2)
@@ -307,7 +282,8 @@ def create_report(wrkdir, report_fn='hs-metrics-report'):
         fig.add_caption(caption.replace('\n', ''))
 
     with doc.create(Figure(position='!htb')) as fig:
-        fig.add_image(users_specified, width=NoEscape(r'\linewidth'))
+        fig.add_image(abspath(join(figdir, users_specified)),
+                      width=NoEscape(r'\linewidth'))
         caption = """
         The distribution of HydroShare users that
         have defined a "user type" in their profile versus users
@@ -317,7 +293,8 @@ def create_report(wrkdir, report_fn='hs-metrics-report'):
         fig.add_caption(caption.replace('\n', ''))
 
     with doc.create(Figure(position='!htb')) as fig:
-        fig.add_image(users_types, width=NoEscape(r'\linewidth'))
+        fig.add_image(abspath(join(figdir, users_types)),
+                      width=NoEscape(r'\linewidth'))
         caption = """
         The distribution of HydroShare users based on
         how they have defined "user type" type in their profile.
@@ -328,7 +305,8 @@ def create_report(wrkdir, report_fn='hs-metrics-report'):
         fig.add_caption(caption.replace('\n', ''))
 
     with doc.create(Figure(position='!htb')) as fig:
-        fig.add_image(org_all, width=NoEscape(r'\linewidth'))
+        fig.add_image(abspath(join(figdir, org_all)),
+                      width=NoEscape(r'\linewidth'))
         caption = """
         Cumulative number of unique, user-specified,
         organizations represented in HydroShare. Values are
@@ -340,7 +318,8 @@ def create_report(wrkdir, report_fn='hs-metrics-report'):
         fig.add_caption(caption.replace('\n', ''))
 
     with doc.create(Figure(position='!htb')) as fig:
-        fig.add_image(org_cuahsi, width=NoEscape(r'\linewidth'))
+        fig.add_image(abspath(join(figdir, org_cuahsi)),
+                      width=NoEscape(r'\linewidth'))
         caption = """
         Cumulative total of unique, user-specified,
         organizations divided into (1) US universities, (2) CUAHSI
@@ -353,7 +332,8 @@ def create_report(wrkdir, report_fn='hs-metrics-report'):
         fig.add_caption(caption.replace('\n', ''))
 
     with doc.create(Figure(position='!htb')) as fig:
-        fig.add_image(downloads_unknown, width=NoEscape(r'\linewidth'))
+        fig.add_image(abspath(join(figdir, downloads_unknown)),
+                      width=NoEscape(r'\linewidth'))
         caption = """
         Total HydroShare resource downloads divided
         into two groups: HydroShare users and anonymous users.
@@ -363,7 +343,8 @@ def create_report(wrkdir, report_fn='hs-metrics-report'):
         fig.add_caption(caption.replace('\n', ''))
 
     with doc.create(Figure(position='!htb')) as fig:
-        fig.add_image(downloads_known, width=NoEscape(r'\linewidth'))
+        fig.add_image(abspath(join(figdir, downloads_known)),
+                      width=NoEscape(r'\linewidth'))
         caption = """
         The distribution of user types for all
         downloads by known HydroShare users, i.e. the user types
@@ -375,7 +356,8 @@ def create_report(wrkdir, report_fn='hs-metrics-report'):
         fig.add_caption(caption.replace('\n', ''))
 
     with doc.create(Figure(position='!htb')) as fig:
-        fig.add_image(resource_size_total, width=NoEscape(r'\linewidth'))
+        fig.add_image(abspath(join(figdir, resource_size_total)),
+                      width=NoEscape(r'\linewidth'))
         caption = """
         The cumulative storage of all HydroShare resources
         plotted by the date in which the resource was created.
@@ -384,7 +366,8 @@ def create_report(wrkdir, report_fn='hs-metrics-report'):
         fig.add_caption(caption.replace('\n', ''))
 
     with doc.create(Figure(position='!htb')) as fig:
-        fig.add_image(resource_size_by_type, width=NoEscape(r'\linewidth'))
+        fig.add_image(abspath(join(figdir, resource_size_by_type)),
+                      width=NoEscape(r'\linewidth'))
         caption = """
         The cumulative storage each resource type in
         HydroShare, plotted by the date in which they were created. These
@@ -393,7 +376,8 @@ def create_report(wrkdir, report_fn='hs-metrics-report'):
         fig.add_caption(caption.replace('\n', ''))
 
     with doc.create(Figure(position='!htb')) as fig:
-        fig.add_image(hs_resource_dois, width=NoEscape(r'\linewidth'))
+        fig.add_image(abspath(join(figdir, hs_resource_dois)),
+                      width=NoEscape(r'\linewidth'))
         caption = """
         The total number of digital object identifiers (DOIs)
         issued to HydroShare resources per month.
@@ -401,7 +385,8 @@ def create_report(wrkdir, report_fn='hs-metrics-report'):
         fig.add_caption(caption.replace('\n', ''))
 
     with doc.create(Figure(position='!htb')) as tab:
-        tab.add_image(all_actions_table, width=NoEscape(r'\linewidth'))
+        tab.add_image(abspath(join(figdir, all_actions_table)),
+                      width=NoEscape(r'\linewidth'))
         caption = """
         The total number of actions performed by HydroShare
         users aggregated quarterly. A session is a unique identity
@@ -416,23 +401,31 @@ def create_report(wrkdir, report_fn='hs-metrics-report'):
         """
         tab.add_caption(caption.replace('\n', ''))
 
-#    with doc.create(Figure(position='!htb')) as fig:
-#        fig.add_image(git_open_closed, width=NoEscape(r'\linewidth'))
-#        caption = """
-#        Overview of GitHub issues over 3-month reporting periods. Opened
-#        issues are those that have been newly opened within the period.
-#        Closed issues are those that have been closed within the period.
-#        """
-#        fig.add_caption(caption.replace('\n', ''))
-
     # create the report
     print('Generating LaTeX Document')
-    doc.generate_pdf(os.path.join(wrkdir, report_fn), clean_tex=False)
-    tex = doc.dumps()  # The document as string in LaTeX syntax
+    doc.generate_pdf(join(wrkdir, report_fn), clean_tex=False)
+    doc.dumps()
 
 
 if __name__ == '__main__':
 
     wrkdir = datetime.strftime(datetime.today(), '%m.%d.%Y')
-    generate_figures(wrkdir)
-    create_report(wrkdir)
+    report_dir = join(wrkdir, 'tex')
+    data_dir = join(wrkdir, 'data')
+    report_fn = f'%s-hydroshare-metrics' % \
+                datetime.strftime(datetime.today(), '%Y.%m.%d')
+
+    fig_dir = join(wrkdir, 'fig')
+    if not exists(fig_dir):
+        makedirs(fig_dir)
+
+    if not exists(report_dir):
+        makedirs(report_dir)
+
+    generate_figures(data_dir, '../fig')
+
+    create_report(report_dir, fig_dir, report_fn=report_fn)
+
+    pdf = f'%s.pdf' % report_fn
+    shutil.move(join(report_dir, pdf),
+                join(wrkdir, pdf))

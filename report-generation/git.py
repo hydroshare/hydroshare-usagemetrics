@@ -231,7 +231,7 @@ def all_issues(working_dir, st, et, ptype='line', agg='W'):
     return plot
 
 
-def closed_issues(working_dir, st, et, ptype='line', agg='W'):
+def closed_issues(working_dir, st, et, ptype='line', agg='W', cum=False):
     """
     count of issues that have been closed based on closed_dt,
     summarized by Agg
@@ -252,6 +252,8 @@ def closed_issues(working_dir, st, et, ptype='line', agg='W'):
     # group by date closed
     df_dt = df_unique.groupby(pandas.Grouper(key='closed_dt', freq=agg)) \
                      .count()
+    if cum:
+        df_dt = df_dt.cumsum()
 
     xdata = df_dt.index
     ydata = df_dt.closed.values
@@ -264,7 +266,7 @@ def closed_issues(working_dir, st, et, ptype='line', agg='W'):
     return plot
 
 
-def open_issues(working_dir, st, et, ptype='line', agg='W'):
+def open_issues(working_dir, st, et, ptype='line', agg='W', cum=False):
 
     print('--> computing all open...', flush=True, end='')
 
@@ -278,6 +280,8 @@ def open_issues(working_dir, st, et, ptype='line', agg='W'):
     # group by date
     df_dt = df_unique.groupby(pandas.Grouper(key='created_dt', freq=agg)) \
                      .count()
+    if cum:
+        df_dt = df_dt.cumsum()
 
     xdata = df_dt.index
     ydata = df_dt.open.values
@@ -418,15 +422,14 @@ def plot(plotObjs_ax1, filename, plotObjs_ax2=[],
                             xytext=(0, 10),
                             textcoords='offset points')
 
-    elif ptyep == 'line':
+    elif ptype == 'line':
         for pobj in plotObjs_ax1:
-            if ptype == 'line':
-                ax.plot(pobj.x, pobj.y, pobj.style, label=pobj.label)
+            ax.plot(pobj.x, pobj.y, pobj.style, label=pobj.label)
 
         # add monthly minor ticks
         months = mdates.MonthLocator()
         ax.xaxis.set_minor_locator(months)
-        ax.xaxis.set_minor_formatter(mdates.DateFormatter('%b %d'))
+#        ax.xaxis.set_minor_formatter(mdates.DateFormatter('%b %d'))
 
     # add a legend
     plt.legend()
@@ -488,6 +491,11 @@ if __name__ == "__main__":
     parser.add_argument('-n',
                         help='plot open non-bug, non-enhancement issues',
                         action='store_true')
+    parser.add_argument('--cumulative',
+                        help='plot cumulative values',
+                        action='store_true',
+                        default=False)
+    
     args = parser.parse_args()
 
     st, et = validate_inputs(args.working_dir, args.st, args.et)
@@ -519,13 +527,15 @@ if __name__ == "__main__":
         plots.append(open_issues(args.working_dir,
                                  st, et,
                                  args.plot_type,
-                                 args.agg))
+                                 args.agg,
+                                 cum=args.cumulative))
     if args.c:
         # all closed issues
         plots.append(closed_issues(args.working_dir,
                                    st, et,
                                    args.plot_type,
-                                   args.agg))
+                                   args.agg,
+                                   cum=args.cumulative))
     if args.b:
         # all open bugs
         plots.append(open_bugs(args.working_dir,
