@@ -7,7 +7,6 @@ import hs_restclient as hsapi
 import pandas as pd
 import multiprocessing as mp
 import datetime
-import pdb
 import signal
 import pickle
 import argparse
@@ -99,8 +98,11 @@ def search_hs(resources):
     pool.join()
 
     # saving results to at data frame
-    df = pd.DataFrame(data)
-    df.to_pickle(os.path.join(wrkdir, 'funding.pkl'))
+    try:
+        df = pd.DataFrame(data)
+        df.to_pickle(os.path.join(wrkdir, 'funding.pkl'))
+    except Exception as e:
+        print(e)
 
     return df
 
@@ -242,7 +244,6 @@ if __name__ == "__main__":
 
     # create the resources combined file
     res_df = pd.read_pickle(os.path.join(wrkdir, 'resources.pkl'))
-    pdb.set_trace()
 
     # join with resources dataframe
     print('Creating the funding dataframe')
