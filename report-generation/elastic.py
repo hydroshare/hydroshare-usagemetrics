@@ -4,7 +4,7 @@ import sys
 import os
 import argparse
 from elasticsearch import Elasticsearch
-from pandas.io.json import json_normalize
+from pandas import json_normalize
 import time
 import pandas
 
