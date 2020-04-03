@@ -8,7 +8,8 @@ import argparse
 from datetime import datetime
 
 
-def get_stats_data(users=True, resources=True, activity=True, dirname='.'):
+def get_stats_data(users=True, resources=True,
+                   activity=True, dirname='.', skip=True):
 
     # standard query parameters
     host = 'usagemetrics.hydroshare.org'
@@ -32,23 +33,32 @@ def get_stats_data(users=True, resources=True, activity=True, dirname='.'):
 
     # get user data
     if users:
-        print('--> downloading user metrics')
-        elastic.get_es_data(host, port, uindex, outpik=ufile, outfile=ucsv)
+        if os.path.exists(ufile) and skip:
+            print(f'--> file exists: {ufile}...skipping')
+        else:
+            print('--> downloading user metrics')
+            elastic.get_es_data(host, port, uindex, outpik=ufile, outfile=ucsv)
     else:
         ufile = ''
 
     # get resource data
     if resources:
-        print('--> downloading resource metrics')
-        elastic.get_es_data(host, port, rindex, outpik=rfile, outfile=rcsv)
+        if os.path.exists(rfile) and skip:
+            print(f'--> file exists: {rfile}...skipping')
+        else:
+            print('--> downloading resource metrics')
+            elastic.get_es_data(host, port, rindex, outpik=rfile, outfile=rcsv)
     else:
         rfile = ''
 
     # get activity data
     if activity:
-        print('--> downloading activity metrics')
-        elastic.get_es_data(host, port, aindex, query=aquery,
-                            outpik=afile, outfile=acsv)
+        if os.path.exists(afile) and skip:
+            print(f'--> file exists: {afile}...skipping')
+        else:
+            print('--> downloading activity metrics')
+            elastic.get_es_data(host, port, aindex, query=aquery,
+                                outpik=afile, outfile=acsv)
     else:
         afile = ''
 
@@ -95,20 +105,23 @@ if __name__ == '__main__':
     # create a directory for these data
     datadir = args.d
 
-    if args.s:
-        if os.path.exists(datadir):
-            print('Directory already exists, skipping')
-            sys.exit(0)
+#    if args.s:
+#        if os.path.exists(datadir):
+#            print('Directory already exists, skipping')
+#            sys.exit(0)
 
-    i = 2
-    while os.path.exists(datadir):
-        dirs = datadir.split()
-        dirs[0] = dirs[0][:10] + '_%d' % i
-        i += 1
-        datadir = '/'.join(dirs)
-    os.makedirs(datadir)
+    if not os.path.exists(datadir):
+        os.makedirs(datadir)
+
+#    i = 2
+#    while os.path.exists(datadir):
+#        dirs = datadir.split()
+#        dirs[0] = dirs[0][:10] + '_%d' % i
+#        i += 1
+#        datadir = '/'.join(dirs)
+#    os.makedirs(datadir)
 
     print('Metrics will be saved into: %s' % datadir)
 
-    data = get_stats_data(dirname=datadir)
+    data = get_stats_data(dirname=datadir, skip=args.s)
 

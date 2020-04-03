@@ -22,11 +22,11 @@ def load_data(workingdir):
     df.usr_last_login_date = pandas.to_datetime(df.usr_last_login_date).dt.normalize()
     df.report_date = pandas.to_datetime(df.report_date).dt.normalize()
 
-    # fill NA values.  This happens when a user never logs in
-    df.usr_last_login_date = df.usr_last_login_date.fillna(0)
-
-    # replace NaN to clean xls output
-    df = df.fillna('')
+#    # fill NA values.  This happens when a user never logs in
+#    df.usr_last_login_date = df.usr_last_login_date.fillna(0)
+#
+#    # replace NaN to clean xls output
+#    df = df.fillna('')
 
     # add another date column and make it the index
     df['Date'] = df['date']

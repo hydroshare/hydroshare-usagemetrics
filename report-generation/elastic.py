@@ -4,7 +4,7 @@ import sys
 import os
 import argparse
 from elasticsearch import Elasticsearch
-from pandas import json_normalize
+from pandas.io.json import json_normalize
 import time
 import pandas
 
@@ -13,6 +13,22 @@ DEFAULT_TRIM = ['@version', 'beat.hostname', 'beat.name', 'count', 'fields',
                 'host', 'indextag', 'input_type', 'logname', 'message',
                 'source', 'syslog_facility', 'syslog_facility_code',
                 'syslog_severity', 'syslog_severity_code', 'tags', 'type']
+
+
+def convert_binary_string(value):
+    """
+    This function removes the string encapsulated bytestrings that 
+    HydroShare sends to ElasticSearch.
+
+    usage: df.applymap(convert_binary_string)
+    """
+    try:
+        if type(value) == str:
+            return eval(value).decode('utf-8')
+        else:
+            return value
+    except Exception:
+        return value
 
 
 def print_progress(iteration, total, prefix='', suffix='',
@@ -57,6 +73,7 @@ def get_es_data(host, port='8080', index='*', query='*', outfile=None,
 
     # save the results in a pandas dataframe
     df = json_normalize(response['hits']['hits'])
+    df = df.applymap(convert_binary_string)
 
     while 1:
         try:
@@ -70,9 +87,9 @@ def get_es_data(host, port='8080', index='*', query='*', outfile=None,
             if scroll_size > 0:
                 # save the results in a pandas dataframe and append
                 # to previous results
-                df = pandas.concat([df,
-                                    json_normalize(response['hits']['hits'])],
-                                   sort=False)
+                new_df = json_normalize(response['hits']['hits'])
+                new_df = new_df.applymap(convert_binary_string)
+                df = pandas.concat([df, new_df], sort=False)
             else:
                 break
 
@@ -81,10 +98,11 @@ def get_es_data(host, port='8080', index='*', query='*', outfile=None,
             doc_size = total_size if doc_size > total_size else doc_size
 
             # print progress
-            print_progress(doc_size, total_size, prefix='downloading', length=50,
+            print_progress(doc_size, total_size,
+                           prefix='downloading', length=50,
                            suffix='[ %d of %d ]    ' % (doc_size, total_size))
 
-            # exit if the total downloaded size is equal to the 
+            # exit if the total downloaded size is equal to the
             # total known size of the data
             if doc_size == total_size:
                 break

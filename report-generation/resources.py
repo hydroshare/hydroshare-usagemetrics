@@ -35,8 +35,8 @@ def load_data(workingdir):
     df['date'] = pandas.to_datetime(df.res_date_created).dt.normalize()
     df.res_date_created = pandas.to_datetime(df.res_date_created).dt.normalize()
 
-    # replace NaN to clean xls output
-    df = df.fillna('')
+#    # replace NaN to clean xls output
+#    df = df.fillna('')
 
     # add another date column and make it the index
     df['Date'] = df['date']
@@ -66,6 +66,7 @@ def subset_by_date(dat, st, et):
 def total_resources(working_dir, st, et, agg='1D'):
 
     print('--> calculating total resources size')
+    
 
     # load the data based on working directory
     print('    .. loading dataset')
@@ -87,7 +88,8 @@ def total_resources(working_dir, st, et, agg='1D'):
 
 def total_resources_by_type(working_dir, st, et, agg='1D'):
 
-    print('--> calculating total users')
+    print('--> calculating total resource size by type')
+
 
     # load the data based on working directory
     df = load_data(working_dir)

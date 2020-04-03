@@ -20,3 +20,34 @@ $ vim /etc/logrotate.d/logstash
   notifempty  
  }
 ```
+
+# Purge ES data
+```
+# select activity for the last 10 days
+GET www-activity-*/_search
+{
+"query": {
+        "range" : {
+            "@timestamp" : {
+                "gte" : "now-50d/d",
+                "lt" :  "now/d"
+            }
+        }
+    }
+}
+```
+
+# Delete by query
+```
+POST /www-activity-*/_delete_by_query
+{
+"query": {
+        "range" : {
+            "@timestamp" : {
+                "gte" : "now-50d/d",
+                "lt" :  "now/d"
+            }
+        }
+    }
+}
+```

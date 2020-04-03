@@ -40,11 +40,11 @@ def load_data(workingdir, pickle_file='users.pkl'):
         df.report_date = pandas.to_datetime(df.report_date) \
                                .dt.normalize()
 
-        # fill NA values.  This happens when a user never logs in
-        df.usr_last_login_date = df.usr_last_login_date.fillna(0)
+#        # fill NA values.  This happens when a user never logs in
+#        df.usr_last_login_date = df.usr_last_login_date.fillna(0, downcast=False)
 
-        # replace NaN to clean xls output
-        df = df.fillna('')
+#        # replace NaN to clean xls output
+#        df = df.fillna('', downcast=False)
 
         # add another date column and make it the index
         df['Date'] = df['date']
@@ -186,7 +186,7 @@ def new_users(working_dir, st, et, activerange, step):
 
 
 def returning_users(working_dir, st, et, activerange, step):
-
+    
     # load the data based on working directory
     df = load_data(working_dir, 'users.pkl')
     df = subset_by_date(df, st, et)
@@ -357,3 +357,6 @@ if __name__ == "__main__":
                  title=args.figure_title,
                  ylabel='Number of Users',
                  xlabel='Date')
+
+
+
