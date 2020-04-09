@@ -44,7 +44,7 @@ def print_progress(iteration, total, prefix='', suffix='',
 
 def get_es_data(host, port='8080', index='*', query='*', outfile=None,
                 outpik='usage.pkl', prefix=['_source.'], drop_standard=True,
-                drop=[]):
+                drop=[], deidentfy=False):
 
     # connect to the hydroshare elasticsearch server
     es = Elasticsearch([{'host': host, 'port': port}])
@@ -52,7 +52,7 @@ def get_es_data(host, port='8080', index='*', query='*', outfile=None,
     # perform search
     try:
         temp_r = es.search(index=index, q=query, scroll='2m', size=10)
-    except:
+    except Exception:
         print('Failed to complete search.')
         sys.exit(1)
 

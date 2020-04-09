@@ -9,7 +9,8 @@ from datetime import datetime
 
 
 def get_stats_data(users=True, resources=True,
-                   activity=True, dirname='.', skip=True):
+                   activity=True, dirname='.',
+                   skip=True, deidentify=False):
 
     # standard query parameters
     host = 'usagemetrics.hydroshare.org'
@@ -33,11 +34,16 @@ def get_stats_data(users=True, resources=True,
 
     # get user data
     if users:
+        drop = []
+        if deidentify:
+            drop = ['usr_email', 'usr_firstname', 'usr_lastname']
         if os.path.exists(ufile) and skip:
             print(f'--> file exists: {ufile}...skipping')
         else:
             print('--> downloading user metrics')
-            elastic.get_es_data(host, port, uindex, outpik=ufile, outfile=ucsv)
+            elastic.get_es_data(host, port,
+                                uindex, outpik=ufile,
+                                outfile=ucsv, drop=drop)
     else:
         ufile = ''
 
@@ -53,12 +59,14 @@ def get_stats_data(users=True, resources=True,
 
     # get activity data
     if activity:
+        if deidentify:
+            drop = ['usr']
         if os.path.exists(afile) and skip:
             print(f'--> file exists: {afile}...skipping')
         else:
             print('--> downloading activity metrics')
             elastic.get_es_data(host, port, aindex, query=aquery,
-                                outpik=afile, outfile=acsv)
+                                outpik=afile, outfile=acsv, drop=drop)
     else:
         afile = ''
 
@@ -99,6 +107,10 @@ if __name__ == '__main__':
     parser.add_argument('-d',
                         help='directory to save data',
                         default=datetime.now().strftime('%m.%d.%Y'))
+    parser.add_argument('--de-identify',
+                        help='de-identify the raw data',
+                        action='store_true',
+                        default=False)
 
     args = parser.parse_args()
 
@@ -123,5 +135,7 @@ if __name__ == '__main__':
 
     print('Metrics will be saved into: %s' % datadir)
 
-    data = get_stats_data(dirname=datadir, skip=args.s)
+    data = get_stats_data(dirname=datadir,
+                          skip=args.s,
+                          deidentify=args.de_identify)
 

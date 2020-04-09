@@ -35,7 +35,8 @@ def generate_figures(wrkdir, figdir):
 
         # collect data
         print('Collecting data')
-        run(['collect_data.py', '-s', '-d', wrkdir])
+        run(['collect_data.py', '-s', '-d',
+              wrkdir, '--de-identify'])
 
         #########
         # USERS #

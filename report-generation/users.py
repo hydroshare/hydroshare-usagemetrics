@@ -2,21 +2,25 @@
 
 import os
 import pytz
+import numpy
 import pandas
 import argparse
 from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
+from matplotlib.pyplot import cm
 
 from pandas.plotting import register_matplotlib_converters
 register_matplotlib_converters()
 
+
 class PlotObject(object):
-    def __init__(self, x, y, label='', style='b-'):
+    def __init__(self, x, y, label='', color='b', linestyle='-'):
         self.x = x
         self.y = y
         self.label = label
-        self.style = style
+        self.linestyle = linestyle
+        self.color = color
 
 
 def load_data(workingdir, pickle_file='users.pkl'):
@@ -101,7 +105,7 @@ def total_users(working_dir, st, et, step):
     # create plot object
     x = ds.index
     y = ds.values.tolist()
-    plot = PlotObject(x, y, label='total users', style='k-')
+    plot = PlotObject(x, y, label='total users', color='k', linestyle='-')
 
     return plot
 
@@ -145,7 +149,7 @@ def active_users(working_dir, st, et, activerange, step):
 
     # create plot object
     plot = PlotObject(x, y, label='active users (%d days)' % activerange,
-                      style='b-')
+                      color='b', linestyle='-')
 
     with open(f'{working_dir}/active-users-{activerange}.csv', 'w') as f:
         f.write(f'Date,Number of Active Users (logged in with {activerange} days)\n')
@@ -180,7 +184,7 @@ def new_users(working_dir, st, et, activerange, step):
         t += timedelta(days=step)
 
     # create plot object
-    plot = PlotObject(x, y, label='new users', style='g-')
+    plot = PlotObject(x, y, label='new users', color='g', linestyle='-')
 
     return plot
 
@@ -226,8 +230,51 @@ def returning_users(working_dir, st, et, activerange, step):
         t += timedelta(days=step)
 
     # create plot object
-    plot = PlotObject(x, y, label='returning users', style='r-')
+    plot = PlotObject(x, y, label='returning users', color='r', linestyle='-')
     return plot
+
+
+def users_by_type(working_dir, st, et, utypes='University Faculty', agg='1D'):
+
+    # load the data based on working directory
+    df = load_data(working_dir, 'users.pkl')
+    df = subset_by_date(df, st, et)
+
+    # define HS user types
+    usertypes = ['Unspecified', 'Post-Doctoral Fellow',
+                 'Commercial/Professional', 'University Faculty',
+                 'Government Official', 'University Graduate Student',
+                 'Professional', 'University Professional or Research Staff',
+                 'Local Government', 'University Undergraduate Student',
+                 'School Student Kindergarten to 12th Grade',
+                 'School Teacher Kindergarten to 12th Grade', 'Other']
+
+    # clean the data
+    df.loc[~df.usr_type.isin(usertypes), 'usr_type'] = 'Other'
+
+    # loop through each of the user types
+    plots = []
+    colors = iter(cm.jet(numpy.linspace(0, 1, len(utypes))))
+    for utype in utypes:
+
+        # group by user type
+        du = df.loc[df.usr_type == utype]
+
+        # remove null values
+        du = du.dropna()
+
+        # group by date frequency
+        ds = du.groupby(pandas.Grouper(freq=agg)).count().usr_type.cumsum()
+        x = ds.index.values
+        y = ds.values
+        c = next(colors)
+
+        # create plot object
+        plot = PlotObject(x, y, label=utype, color=c, linestyle='-')
+
+        plots.append(plot)
+
+    return plots
 
 
 def plot(plotObjs_ax1, filename, plotObjs_ax2=[], **kwargs):
@@ -249,12 +296,18 @@ def plot(plotObjs_ax1, filename, plotObjs_ax2=[], **kwargs):
         getattr(ax, 'set_'+k)(v)
 
     for pobj in plotObjs_ax1:
-        ax.plot(pobj.x, pobj.y, pobj.style, label=pobj.label)
+        ax.plot(pobj.x, pobj.y,
+                color=pobj.color,
+                linestyle=pobj.linestyle,
+                label=pobj.label)
 
     if len(plotObjs_ax2) > 0:
         ax2 = ax.twinx()
         for pobj in plotObjs_ax2:
-            ax2.plot(pobj.x, pobj.y, pobj.style, label=pobj.label)
+            ax2.plot(pobj.x, pobj.y,
+                     color=pobj.color,
+                     linestyle=pobj.style,
+                     label=pobj.label)
 
     # add a legend
     plt.legend()
@@ -305,6 +358,17 @@ if __name__ == "__main__":
     parser.add_argument('-r',
                         help='plot returning users line',
                         action='store_true')
+    parser.add_argument('-u',
+                        help='plot user types',
+                        action='store_true')
+    parser.add_argument('--utypes',
+                        nargs='+',
+                        help='user types to plot. use this arg with "-u"',
+                        default=[])
+    parser.add_argument('--agg',
+                        help='aggregation to use, e.g. 1W. use this arg with "-u"',
+                        default='1W')
+
     args = parser.parse_args()
 
     ######### check date formats #########
@@ -352,6 +416,11 @@ if __name__ == "__main__":
             res = returning_users(args.working_dir, st, et,
                                   activedays, step)
             plots.append(res)
+        if args.u:
+            res = users_by_type(args.working_dir, st, et,
+                                utypes=args.utypes,
+                                agg=args.agg)
+            plots.extend(res)
         if len(plots) > 0:
             plot(plots, os.path.join(args.working_dir, args.filename),
                  title=args.figure_title,

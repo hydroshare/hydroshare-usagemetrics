@@ -37,8 +37,13 @@ class Timeout():
 
 
 def check_pub(q, out_q):
+
     while True:
-        resid = q.get()
+        try:
+            resid = q.get(timeout=1)
+        except mp.Queue.Empty:
+            resid = None
+
         if resid is None:
             print('X', flush=True, end='')
             return
@@ -83,9 +88,10 @@ def search_hs(resources):
     # tell workers to exit
     for _ in range(NCORE):
         in_q.put(None)
-
+    
     # wait for all processes to finish
     while not in_q.empty():
+#        print(f'\nQUEUE SIZE: {in_q.qsize()}\n')
         time.sleep(1)
 
     # dequeue the out_q to prevent the underlying pipe from freezing join
