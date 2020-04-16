@@ -27,8 +27,14 @@ def get_stats_data(users=True, resources=True,
 
 #    cfile = os.path.join(dirname, 'combined-stats.pkl')
 
+    report_dt_str = datetime.today().strftime('%m/%d/%Y')
+
     uindex = '*user*latest*'
+    uquery = f'rpt_dt_str:"{report_dt_str}"'
+
     rindex = '*resource*latest*'
+    rquery = f'rpt_dt_str:"{report_dt_str}"'
+
     aindex = '*activity*'
     aquery = '-user_id:None AND -action:visit'
 
@@ -40,10 +46,17 @@ def get_stats_data(users=True, resources=True,
         if os.path.exists(ufile) and skip:
             print(f'--> file exists: {ufile}...skipping')
         else:
-            print('--> downloading user metrics')
-            elastic.get_es_data(host, port,
-                                uindex, outpik=ufile,
-                                outfile=ucsv, drop=drop)
+            print('DOWNLOADING USER DATA')
+            kwargs = dict(query=uquery,
+                          port=port,
+                          index=uindex,
+                          outpik=ufile,
+                          outfile=ucsv,
+                          drop=drop)
+            for k, v in kwargs.items():
+                print(f'--> {k}: {v}')
+
+            elastic.get_es_data(host, **kwargs)
     else:
         ufile = ''
 
@@ -52,8 +65,16 @@ def get_stats_data(users=True, resources=True,
         if os.path.exists(rfile) and skip:
             print(f'--> file exists: {rfile}...skipping')
         else:
-            print('--> downloading resource metrics')
-            elastic.get_es_data(host, port, rindex, outpik=rfile, outfile=rcsv)
+            print('--> DOWNLOADING RESOURCE DATA')
+            kwargs = dict(query=rquery,
+                          port=port,
+                          index=rindex,
+                          outpik=rfile,
+                          outfile=rcsv)
+            for k, v in kwargs.items():
+                print(f'--> {k}: {v}')
+
+            elastic.get_es_data(host, **kwargs)
     else:
         rfile = ''
 

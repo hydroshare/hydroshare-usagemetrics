@@ -36,10 +36,10 @@ def print_progress(iteration, total, prefix='', suffix='',
     percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
     filledLength = int(length * iteration // total)
     bar = fill * filledLength + '-' * (length - filledLength)
-    print('\r%s |%s| %s%% %s' % (prefix, bar, percent, suffix), end='\r')
+    print('%s |%s| %s%% %s' % (prefix, bar, percent, suffix), end='\r')
     # print newline on complete
     if iteration == total:
-        print('\r%s |%s| %s%% %s' % (prefix, fill*length, '100', suffix), end='\n')
+        print('%s |%s| %s%% %s' % (prefix, fill*length, '100', suffix), end='\n')
 
 
 def get_es_data(host, port='8080', index='*', query='*', outfile=None,
