@@ -51,7 +51,7 @@ def get_es_data(host, port='8080', index='*', query='*', outfile=None,
 
     # perform search
     try:
-        temp_r = es.search(index=index, q=query, scroll='2m', size=10)
+        temp_r = es.search(index=index, q=query, scroll='10m', size=10)
     except Exception:
         print('Failed to complete search.')
         sys.exit(1)
@@ -68,7 +68,7 @@ def get_es_data(host, port='8080', index='*', query='*', outfile=None,
     print('--> scroll_size = %d' % scroll_size)
 
     # execute the first elasticsearch query and increment the doc_size
-    response = es.search(index=index, q=query, scroll='2m', size=scroll_size)
+    response = es.search(index=index, q=query, scroll='10m', size=scroll_size)
     doc_size += len(response['hits']['hits'])
 
     # save the results in a pandas dataframe
@@ -79,7 +79,7 @@ def get_es_data(host, port='8080', index='*', query='*', outfile=None,
         try:
             # make the next request using the previous _scroll_id
             sid = response['_scroll_id']
-            response = es.scroll(scroll_id=sid, scroll='2m')
+            response = es.scroll(scroll_id=sid, scroll='10m')
 
             # get the scroll_size of the previous query and exit
             # if it is zero

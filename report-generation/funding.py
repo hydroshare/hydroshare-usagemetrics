@@ -180,6 +180,8 @@ def collect_resource_ids():
 
     pool.close()
     pool.join()
+
+    print(f'Found {len(res_ids)} resources')
     return res_ids
 
 
