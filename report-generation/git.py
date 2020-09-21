@@ -100,10 +100,10 @@ def validate_inputs(working_dir, st, et):
         print('\tincorrect end date format, using default start date: %s'
               % et.strftime('%m-%d-%Y'))
 
-    # check that dat exist 
-    if not os.path.exists(os.path.join(working_dir, 'users.pkl')):
-        print('\n\tcould not find \'users.pkl\', skipping.'
-              '\n\trun \'collect_hs_data\' to retrieve these missing data')
+#    # check that dat exist 
+#    if not os.path.exists(os.path.join(working_dir, 'users.pkl')):
+#        print('\n\tcould not find \'users.pkl\', skipping.'
+#              '\n\trun \'collect_hs_data\' to retrieve these missing data')
 
     return st, et
 
@@ -206,7 +206,42 @@ def load_data(working_dir):
     return df
     
 
-def all_issues(working_dir, st, et, ptype='line', agg='W'):
+def filter_by_label(df, label_str):
+    """
+    label1 label2 -label3
+    """
+    
+    if label_str == 'None' or label_str is None or len(label_str) == 0:
+        return '', df
+
+    all_labels = df.label.unique()
+
+    logical_and = []
+    logical_not = []
+    # split apart the label components
+    labels = label_str.split(' ')
+    for label in labels:
+        if label not in all_labels and label[1:] not in all_labels:
+            print(f'Label not found: {label}, skipping')
+            sys.exit(1)
+        if label[0] == '~':
+            logical_not.append(label[1:])
+        else:
+            logical_and.append(label)
+
+    # filter the data
+    series_label = ''
+    if len(logical_and) > 0:
+        df = df[df.label.isin(logical_and)]
+        series_label += '+'.join(logical_and)
+    if len(logical_not) > 0:
+        df = df[~df.label.isin(logical_not)]
+        series_label += '* -' + '-'.join(logical_not)
+
+    return series_label, df
+
+
+def all_issues(working_dir, st, et, ptype='line', agg='W', label=None, style='k-'):
     
     print('--> computing all issues...', flush=True, end='')
     df = load_data(working_dir)
@@ -216,22 +251,28 @@ def all_issues(working_dir, st, et, ptype='line', agg='W'):
     # issues having multiple labels
     df_unique = df.drop_duplicates('number')
 
+    # filter by label
+    flabel, df_unique = filter_by_label(df, label)
+
     # group by date
     df_dt = df_unique.groupby(pandas.Grouper(key='created_dt', freq=agg)) \
                      .count().cumsum()
 
     xdata = df_dt.index
     ydata = df_dt.number.values
-
+    
+    #slabel = f'open+closed issues: {label}' if label is not None else 'open+closed issues'
+    slabel = f'open+closed issues: {flabel}'
     plot = PlotObject(x=xdata, y=ydata,
-                      label='all issues', style='k-',
+                      label=slabel,
+                      style=style,
                       type=ptype)
 
     print('%d total' % ydata[-1])
     return plot
 
 
-def closed_issues(working_dir, st, et, ptype='line', agg='W', cum=False):
+def closed_issues(working_dir, st, et, ptype='line', agg='W', cum=False, label=None, style='b-'):
     """
     count of issues that have been closed based on closed_dt,
     summarized by Agg
@@ -246,8 +287,11 @@ def closed_issues(working_dir, st, et, ptype='line', agg='W', cum=False):
     # issues having multiple labels
     df_unique = df.drop_duplicates('number')
     
-    # drop all values that do not have a closed_dt
-    df_closed = df_unique.closed_dt.dropna()
+    # filter by label
+    flabel, df_unique = filter_by_label(df, label)
+
+#    # drop all values that do not have a closed_dt
+#    df_closed = df_unique.closed_dt.dropna()
 
     # group by date closed
     df_dt = df_unique.groupby(pandas.Grouper(key='closed_dt', freq=agg)) \
@@ -258,15 +302,18 @@ def closed_issues(working_dir, st, et, ptype='line', agg='W', cum=False):
     xdata = df_dt.index
     ydata = df_dt.closed.values
 
+#    slabel = f'closed issues: {label}' if label is not None else 'all closed issues'
+    slabel = f'closed issues: {flabel}'
     plot = PlotObject(x=xdata, y=ydata,
-                      label='closed issues', style='b-',
+                      label=slabel,
+                      style=style,
                       type=ptype)
 
     print('%d total' % ydata[-1])
     return plot
 
 
-def open_issues(working_dir, st, et, ptype='line', agg='W', cum=False):
+def open_issues(working_dir, st, et, ptype='line', agg='W', cum=False, label=None, style='r-'):
 
     print('--> computing all open...', flush=True, end='')
 
@@ -277,6 +324,9 @@ def open_issues(working_dir, st, et, ptype='line', agg='W', cum=False):
     # issues having multiple labels
     df_unique = df.drop_duplicates('number')
 
+    # filter by label
+    flabel, df_unique = filter_by_label(df, label)
+
     # group by date
     df_dt = df_unique.groupby(pandas.Grouper(key='created_dt', freq=agg)) \
                      .count()
@@ -286,8 +336,10 @@ def open_issues(working_dir, st, et, ptype='line', agg='W', cum=False):
     xdata = df_dt.index
     ydata = df_dt.open.values
 
+    slabel = f'open issues: {flabel}'
     plot = PlotObject(x=xdata, y=ydata,
-                      label='opened issues', style='r-',
+                      label=slabel,
+                      style=style,
                       type=ptype)
 
     print('%d total' % ydata[-1])
@@ -455,6 +507,9 @@ if __name__ == "__main__":
     parser.add_argument('--filename',
                         help='filename for the output figure',
                         default='git-issues.png')
+    parser.add_argument('--get-labels',
+                        help='print all issue labels that are present in the data',
+                        action='store_true')
     parser.add_argument('--figure-title',
                         help='title for output figure',
                         default='Summary of Git Issues')
@@ -474,17 +529,20 @@ if __name__ == "__main__":
                         help='reporting end date MM-DD-YYYY',
                         default=datetime.now().strftime('%m-%d-%Y'))
     parser.add_argument('-a',
-                        help='plot all issues',
+                        help='plot all issues by the date they were created',
                         action='store_true')
     parser.add_argument('-o',
-                        help='plot open issues',
+                        help='plot all issues with status=open by the date in which they were created',
                         action='store_true')
     parser.add_argument('-c',
-                        help='plot closed issues',
+                        help='plot all issues with status=closed by the date in which they were closed',
                         action='store_true')
     parser.add_argument('-b',
-                        help='plot open bug tickets',
+                        help='plot all issues with status=open and type=bug by the date they were created',
                         action='store_true')
+    parser.add_argument('--label', nargs='+',
+            help='filter issues by label: "bug Modeling -enhancement" "* -bug"',
+                        default=[None])
     parser.add_argument('-e',
                         help='plot open enhancement tickets',
                         action='store_true')
@@ -495,7 +553,7 @@ if __name__ == "__main__":
                         help='plot cumulative values',
                         action='store_true',
                         default=False)
-    
+
     args = parser.parse_args()
 
     st, et = validate_inputs(args.working_dir, args.st, args.et)
@@ -516,44 +574,55 @@ if __name__ == "__main__":
         print('--> reusing %s' % csv)
 
     plots = []
-    if args.a:
-        # all issues
-        plots.append(all_issues(args.working_dir,
-                                st, et,
-                                args.plot_type,
-                                args.agg))
-    if args.o:
-        # all open issues
-        plots.append(open_issues(args.working_dir,
-                                 st, et,
-                                 args.plot_type,
-                                 args.agg,
-                                 cum=args.cumulative))
-    if args.c:
-        # all closed issues
-        plots.append(closed_issues(args.working_dir,
-                                   st, et,
-                                   args.plot_type,
-                                   args.agg,
-                                   cum=args.cumulative))
-    if args.b:
-        # all open bugs
-        plots.append(open_bugs(args.working_dir,
-                               st, et,
-                               args.plot_type,
-                               args.agg))
-    if args.e:
-        # all open enhancements
-        plots.append(open_enhancements(args.working_dir,
+   
+#    import pdb; pdb.set_trace()
+
+    # loop through labels
+    for label in args.label:
+        if args.a:
+            # all issues
+            plots.append(all_issues(args.working_dir,
+                                    st, et,
+                                    args.plot_type,
+                                    args.agg, label))
+        if args.o:
+            # all open issues
+            plots.append(open_issues(args.working_dir,
+                                     st, et,
+                                     args.plot_type,
+                                     args.agg,
+                                     cum=args.cumulative,
+                                     label=label))
+        if args.c:
+            # all closed issues
+            plots.append(closed_issues(args.working_dir,
                                        st, et,
                                        args.plot_type,
-                                       args.agg))
-    if args.n:
-        # all non-bug non-enhancements
-        plots.append(open_other(args.working_dir,
-                                st, et,
-                                args.plot_type,
-                                args.agg))
+                                       args.agg,
+                                       cum=args.cumulative,
+                                       label=label))
+        if args.b:
+            # all open bugs
+            plots.append(open_bugs(args.working_dir,
+                                   st, et,
+                                   args.plot_type,
+                                   args.agg))
+        if args.e:
+            # all open enhancements
+            plots.append(open_enhancements(args.working_dir,
+                                           st, et,
+                                           args.plot_type,
+                                           args.agg))
+        if args.n:
+            # all non-bug non-enhancements
+            plots.append(open_other(args.working_dir,
+                                    st, et,
+                                    args.plot_type,
+                                    args.agg))
+    if args.get_labels:
+        df = load_data(args.working_dir)
+        for label in df.label.unique():
+            print(label)
 
     if len(plots) > 0:
         types = []

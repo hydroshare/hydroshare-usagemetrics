@@ -1,1 +1,8 @@
 CUAHSI
+CUASHI
+consortium of universities for the advancement of hydrologic sciences
+hydroshare
+hydrologic information system
+hydrodesktop
+hydroclient
+cuahsi.org
