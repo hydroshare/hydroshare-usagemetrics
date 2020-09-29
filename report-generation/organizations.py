@@ -4,7 +4,7 @@ import os
 import pytz
 import pandas
 import argparse
-from datetime import datetime
+from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from pandas.plotting import register_matplotlib_converters
@@ -117,6 +117,17 @@ def plot(plotObjs_ax1, filename, plotObjs_ax2=[], *args, **kwargs):
 
     for pobj in plotObjs_ax1:
         ax.plot(pobj.x, pobj.y, pobj.style, label=pobj.label)
+
+        # annotate the last point
+        ax.text(pobj.x[-1] + timedelta(days=5), # x-loc
+                pobj.y[-1], # y-loc
+                pobj.y[-1], # text value
+                bbox=dict(boxstyle='square,pad=0.5',
+                          fc='none', # foreground color
+                          ec='none', # edge color
+                          ))
+
+    ax.grid()
     ax.set_xlabel('Account Creation Date')
 
     # add a legend
