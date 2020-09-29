@@ -300,6 +300,16 @@ def plot(plotObjs_ax1, filename, plotObjs_ax2=[], **kwargs):
                 color=pobj.color,
                 linestyle=pobj.linestyle,
                 label=pobj.label)
+        # annotate the last point
+        ax.text(pobj.x[-1] + timedelta(days=5), # x-loc
+                pobj.y[-1], # y-loc
+                pobj.y[-1], # text value
+                bbox=dict(boxstyle='square,pad=0.5',
+                          fc='none', # foreground color
+                          ec='none', # edge color
+                          ))
+
+    ax.grid()
 
     if len(plotObjs_ax2) > 0:
         ax2 = ax.twinx()
