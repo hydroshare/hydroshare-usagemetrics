@@ -1,0 +1,14 @@
+report:
+  output_dir: my_test_output
+  input_dir: 01.31.2020/data
+metrics:
+  user:
+    figure_name: users_all_30
+    figure_title: Test
+    active_range: 30
+    step: 10
+    all: True
+    total: True
+    new: True
+
+
