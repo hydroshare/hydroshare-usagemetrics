@@ -1,0 +1,27 @@
+
+<html>
+    <head>
+	<style>
+	    body {
+		display: flex;
+	        flex-direction: column;
+	        justify-content: center;
+	        margin: 50;
+	    }
+    
+	</style>
+    </head>
+    <body>
+
+	{% for i in range(dat|count) %}
+	    <img src={{ dat[i]['img_path'] }}>
+	    <p>
+		<b> Figure {{ i + 1 }}:</b>
+		{{ dat[i]['caption'] }}
+	    </p>
+	    <hr>
+	{% endfor %}
+
+    </body>
+
+</html>

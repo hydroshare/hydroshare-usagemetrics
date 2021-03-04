@@ -1,14 +1,118 @@
 report:
-  output_dir: my_test_output
-  input_dir: 01.31.2020/data
+  collect_data: True
+  input_directory: 03.02.2020
+  output_directory: 03.02.2020/report
 metrics:
-  user:
+  active-users-30-day:
+    metric_type: user
     figure_name: users_all_30
-    figure_title: Test
+    figure_caption: This is my figure caption
+    start_time: 01-01-2016 
+    end_time: 02-01-2021
     active_range: 30
     step: 10
-    all: True
-    total: True
-    new: True
+    series:
+      # colors: supported values are 'b': blue, 'g': green, 'r': red, 'c': cyan, 'm': magenta, 'y': yellow, 'k': black, 'w': white
+      # linestyles: supported values are '-', '--', '-.', ':', 'None', ' ', '', 'solid', 'dashed', 'dashdot', 'dotted'
+      - type: active
+        label: Active Users
+        color: b
+        linestyle: '-'
+      - type: total
+        label: Total Users
+        color: r
+        linestyle: '-'
+      - type: new
+        label: New Users
+        color: g
+        linestyle: '-'
+    figure_configuration:
+      rcParams:
+        # https://matplotlib.org/stable/tutorials/introductory/customizing.html
+        #        font.size: 40.0
+        axes.titlesize: 24
+        axes.labelsize: 16
+        legend.fontsize: 16
+        figure.figsize: 10, 6
+      axis:
+        xlabel: Date
+        ylabel: Number of Users
+        ylim: (0.0, None)
+      figure:
+        title: Test
+  active-users-180-day:
+    metric_type: user
+    figure_name: users_active_180
+    figure_caption: This is my figure caption
+    start_time: 01-01-2016 
+    end_time: 02-01-2021
+    active_range: 180
+    step: 10
+    series:
+      # colors: supported values are 'b': blue, 'g': green, 'r': red, 'c': cyan, 'm': magenta, 'y': yellow, 'k': black, 'w': white
+      # linestyles: supported values are '-', '--', '-.', ':', 'None', ' ', '', 'solid', 'dashed', 'dashdot', 'dotted'
+      - type: active
+        label: Active Users
+        color: b
+        linestyle: '-'
+      - type: total
+        label: Total Users
+        color: r
+        linestyle: '-'
+      - type: new
+        label: New Users
+        color: g
+        linestyle: '-'
+    figure_configuration:
+      rcParams:
+        # https://matplotlib.org/stable/tutorials/introductory/customizing.html
+        #        font.size: 40.0
+        axes.titlesize: 24
+        axes.labelsize: 16
+        legend.fontsize: 16
+        figure.figsize: 10, 6
+      axis:
+        xlabel: Date
+        ylabel: Number of Users
+        ylim: (0.0, None)
+      figure:
+        title: Test
+  all-users-180-day:
+    metric_type: user
+    figure_name: users_all_180
+    figure_caption: This is my figure caption
+    start_time: 01-01-2016 
+    end_time: 02-01-2021
+    active_range: 180
+    step: 10
+    series:
+      # colors: supported values are 'b': blue, 'g': green, 'r': red, 'c': cyan, 'm': magenta, 'y': yellow, 'k': black, 'w': white
+      # linestyles: supported values are '-', '--', '-.', ':', 'None', ' ', '', 'solid', 'dashed', 'dashdot', 'dotted'
+      - type: active
+        label: Active Users
+        color: b
+        linestyle: '-'
+      - type: returning
+        label: Returning Users
+        color: r
+        linestyle: '-'
+      - type: new
+        label: New Users
+        color: g
+        linestyle: '-'
+    figure_configuration:
+      rcParams:
+        # https://matplotlib.org/stable/tutorials/introductory/customizing.html
+        #        font.size: 40.0
+        axes.titlesize: 24
+        axes.labelsize: 16
+        legend.fontsize: 16
+        figure.figsize: 10, 6
+      axis:
+        xlabel: Date
+        ylabel: Number of Users
+        ylim: (0.0, None)
+      figure:
+        title: Test
 
 

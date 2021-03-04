@@ -88,29 +88,44 @@ def subset_by_date(dat, st, et):
         return dat.loc[mask]
 
 
-def total_users(working_dir, st, et, step):
+def total(input_directory='.',
+          start_time=datetime(2000, 1, 1),
+          end_time=datetime(2030, 1, 1),
+          step=1,
+          label='total users',
+          color='k',
+          linestyle='-',
+          **kwargs):
 
     print('--> calculating total users')
 
     # load the data based on working directory
-    df = load_data(working_dir)
+    df = load_data(input_directory)
 
     # group and cumsum
     df = df.sort_index()
     grp = '%dd' % step
     ds = df.groupby(pandas.Grouper(freq=grp)).count().usr_id.cumsum()
 
-    ds = subset_by_date(ds, st, et)
+    ds = subset_by_date(ds, start_time, end_time)
 
     # create plot object
     x = ds.index
     y = ds.values.tolist()
-    plot = PlotObject(x, y, label='total users', color='k', linestyle='-')
+    plot = PlotObject(x, y, label=label, color=color, linestyle=linestyle)
 
     return plot
 
 
-def active_users(working_dir, st, et, activerange, step):
+def active(input_directory='',
+           start_time=datetime(2000, 1, 1),
+           end_time=datetime(2000, 1, 1),
+           active_range=30,
+           step=1,
+           label='Active Users',
+           color='b',
+           linestyle='-',
+           **kwargs):
     """
     Calculates the number of active users for any given time frame.
     An active user is a user that has performed a HydroShare action 
@@ -120,21 +135,21 @@ def active_users(working_dir, st, et, activerange, step):
     print('--> calculating active users')
 
     # load the data based on working directory
-    df = load_data(working_dir, 'activity.pkl')
-    df = subset_by_date(df, st, et)
+    df = load_data(input_directory, 'activity.pkl')
+    df = subset_by_date(df, start_time, end_time)
     df = df.sort_index()
 
-    dfu = load_data(working_dir, 'users.pkl')
-    dfu = subset_by_date(dfu, st, et)
+    dfu = load_data(input_directory, 'users.pkl')
+    dfu = subset_by_date(dfu, start_time, end_time)
 
     x, y = [], []
 
     # set the start date as the earliest available date plus the 
     # active date range
-    t = df.date.min() + timedelta(days=activedays)
-    while t < et:
+    t = df.date.min() + timedelta(days=active_range)
+    while t < end_time:
 
-        min_active_date = t - timedelta(days=activerange)
+        min_active_date = t - timedelta(days=active_range)
 
         # isolate users that performed an action
         subdf = df[(df.date <= t) &
@@ -148,31 +163,39 @@ def active_users(working_dir, st, et, activerange, step):
         t += timedelta(days=step)
 
     # create plot object
-    plot = PlotObject(x, y, label='active users (%d days)' % activerange,
-                      color='b', linestyle='-')
+    plot = PlotObject(x, y, label=label,
+                      color=color, linestyle=linestyle)
 
-    with open(f'{working_dir}/active-users-{activerange}.csv', 'w') as f:
-        f.write(f'Date,Number of Active Users (logged in with {activerange} days)\n')
+    with open(f'{input_directory}/active-users-{active_range}.csv', 'w') as f:
+        f.write(f'Date,Number of Active Users (logged in with {active_range} days)\n')
         for i in range(0, len(x)):
             f.write(f'{str(x[i])},{y[i]}\n')
 
     return plot
 
 
-def new_users(working_dir, st, et, activerange, step):
+def new(input_directory='.',
+        start_time=datetime(2000, 1, 1),
+        end_time=datetime(2030, 1, 1),
+        active_range=30,
+        step=1,
+        label='New Users',
+        color='g',
+        linestyle='-',
+        **kwargs):
 
     # load the data based on working directory
-    df = load_data(working_dir)
-    df = subset_by_date(df, st, et)
+    df = load_data(input_directory)
+    df = subset_by_date(df, start_time, end_time)
 
     print('--> calculating new users')
     x = []
     y = []
 
     t = df['usr_created_date'].min()
-    while t < et:
+    while t < end_time:
 
-        earliest_date = t - timedelta(days=activerange)
+        earliest_date = t - timedelta(days=active_range)
 
         subdfn = df[(df.usr_created_date <= t) &
                     (df.usr_created_date > earliest_date)]
@@ -184,18 +207,26 @@ def new_users(working_dir, st, et, activerange, step):
         t += timedelta(days=step)
 
     # create plot object
-    plot = PlotObject(x, y, label='new users', color='g', linestyle='-')
+    plot = PlotObject(x, y, label=label, color=color, linestyle=linestyle)
 
     return plot
 
 
-def returning_users(working_dir, st, et, activerange, step):
-    
+def returning(input_directory='.',
+              start_time=datetime(2000, 1, 1),
+              end_time=datetime(2030, 1, 1),
+              active_range=30,
+              step=10,
+              color='r',
+              label='Returning Users',
+              linestyle='-',
+              **kwargs):
+
     # load the data based on working directory
-    df = load_data(working_dir, 'users.pkl')
-    df = subset_by_date(df, st, et)
-    dfa = load_data(working_dir, 'activity.pkl')
-    dfa = subset_by_date(dfa, st, et)
+    df = load_data(input_directory, 'users.pkl')
+    df = subset_by_date(df, start_time, end_time)
+    dfa = load_data(input_directory, 'activity.pkl')
+    dfa = subset_by_date(dfa, start_time, end_time)
 
     print('--> calculating returning users')
     x = []
@@ -203,11 +234,11 @@ def returning_users(working_dir, st, et, activerange, step):
 
     # set the start date as the earliest available date plus the 
     # active date range
-    t = dfa.date.min() + timedelta(days=activedays)
+    t = dfa.date.min() + timedelta(days=active_range)
 #    n = []
 #    a = []
-    while t < et:
-        earliest_date = t - timedelta(days=activerange)
+    while t < end_time:
+        earliest_date = t - timedelta(days=active_range)
 
         ## subset all users to those that exist up to the current time, t
         #subdf = df[df.usr_created_date <= t]
@@ -230,7 +261,7 @@ def returning_users(working_dir, st, et, activerange, step):
         t += timedelta(days=step)
 
     # create plot object
-    plot = PlotObject(x, y, label='returning users', color='r', linestyle='-')
+    plot = PlotObject(x, y, label=label, color=color, linestyle=linestyle)
     return plot
 
 
@@ -277,7 +308,13 @@ def users_by_type(working_dir, st, et, utypes='University Faculty', agg='1D'):
     return plots
 
 
-def plot(plotObjs_ax1, filename, plotObjs_ax2=[], **kwargs):
+def plot(plotObjs_ax1,
+         filename,
+         plotObjs_ax2=[],
+         axis_dict={},
+         figure_dict={},
+         rcParams={},
+         **kwargs):
     """
     Creates a figure give plot objects
     plotObjs: list of plot object instances
@@ -285,15 +322,16 @@ def plot(plotObjs_ax1, filename, plotObjs_ax2=[], **kwargs):
     **kwargs: matplotlib plt args, e.g. xlabel, ylabel, title, etc
     """
 
-    # create figure of these data
     print('--> making figure...')
-    fig, ax = plt.subplots(figsize=(12, 9))
+
+    # set global plot attributes
+    if rcParams != {}:
+        plt.rcParams.update(rcParams)
+
+    # create figure of these data
+    fig, ax = plt.subplots()
     plt.xticks(rotation=45)
     plt.subplots_adjust(bottom=0.25)
-
-    # set plot attributes
-    for k, v in kwargs.items():
-        getattr(ax, 'set_'+k)(v)
 
     for pobj in plotObjs_ax1:
         ax.plot(pobj.x, pobj.y,
@@ -325,6 +363,20 @@ def plot(plotObjs_ax1, filename, plotObjs_ax2=[], **kwargs):
     # add monthly minor ticks
     months = mdates.MonthLocator()
     ax.xaxis.set_minor_locator(months)
+    
+    # set plot attributes
+    for k, v in axis_dict.items():
+        # eval if string is a tuple
+        if '(' in v:
+            v = eval(v)
+        getattr(ax, 'set_'+k)(v)
+    
+    for k, v in figure_dict.items():
+        getattr(plt, k)(v)
+
+
+#    for k, v in text_dict.items():
+#        getattr(ax, k)(v)
 
     # save the figure and the data
     print('--> saving figure as %s' % filename)
@@ -411,20 +463,20 @@ if __name__ == "__main__":
 
         plots = []
         if args.t:
-            res = total_users(args.working_dir, st, et,
-                              step)
+            res = total(args.working_dir, st, et,
+                        step)
             plots.append(res)
         if args.a:
-            res = active_users(args.working_dir, st, et,
-                               activedays, step)
+            res = active(args.working_dir, st, et,
+                         activedays, step)
             plots.append(res)
         if args.n:
-            res = new_users(args.working_dir, st, et,
-                            activedays, step)
+            res = new(args.working_dir, st, et,
+                      activedays, step)
             plots.append(res)
         if args.r:
-            res = returning_users(args.working_dir, st, et,
-                                  activedays, step)
+            res = returning(args.working_dir, st, et,
+                            activedays, step)
             plots.append(res)
         if args.u:
             res = users_by_type(args.working_dir, st, et,
@@ -432,7 +484,7 @@ if __name__ == "__main__":
                                 agg=args.agg)
             plots.extend(res)
         if len(plots) > 0:
-            plot(plots, os.path.join(args.working_dir, args.filename),
+            plot(plots, args.filename,
                  title=args.figure_title,
                  ylabel='Number of Users',
                  xlabel='Date')

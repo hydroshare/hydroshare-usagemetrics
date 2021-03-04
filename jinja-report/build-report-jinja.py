@@ -5,11 +5,19 @@ import os
 import sys
 import yaml
 import shutil
+import jinja2
 import argparse
 from datetime import datetime
 import series_models as models
 from subprocess import Popen, PIPE
 
+import users
+
+class modules():
+    module_map = {'user': users}
+
+    def lookup(self, type):
+        return self.module_map.get(type, None)
 
 def read_config(yaml_path):
     """
@@ -56,9 +64,6 @@ def run(command):
 
 if __name__ == '__main__':
 
-    default_data_dir = datetime.strftime(datetime.today(), '%m.%d.%Y')
-    default_out_dir = os.getcwd()
-
     p = argparse.ArgumentParser()
     p.add_argument('yaml_data',
                    help='yaml configuration file')
@@ -71,11 +76,16 @@ if __name__ == '__main__':
     report_params = dat.get('report')
 
     # check that the input and output directories exist
-    if not os.path.exists(report_params['input_dir']):
-        print('ERROR: Could not located the input directory: '
-              f'{report_params["input_dir"]}')
-        sys.exit(1)
-    outdir = os.path.abspath(report_params['output_dir'])
+    indir = os.path.join(report_params.get('input_directory'), 'data')
+    if not os.path.exists(indir):
+        print('Could not located the input directory, so I will create it '
+              f'and collect data.')
+        run(['collect_data.py',
+             '-s',
+             '-d',
+             indir,
+             '--de-identify'])
+    outdir = os.path.abspath(report_params['output_directory'])
     if not os.path.exists(outdir):
         print('Could not find output directory so I\'m making one: '
               f'{outdir}')
@@ -84,19 +94,62 @@ if __name__ == '__main__':
     # loop through metrics args and parse them
     metrics = {}
     for k, v in dat.get('metrics', {}).items():
-        _class = getattr(models, k)
+        mtype = v.pop('metric_type', None)
+        if mtype is None:
+            # no metric type was given, skip
+            continue
+
+        # instantiate figure
+        fig_config = v.pop('figure_configuration', None)
+        if fig_config is not None:
+            figure = getattr(models, 'Figure')(**fig_config)
+            v['figure'] = figure
+
+        # instantiate mtype class
+        _class = getattr(models, mtype)
+        v['input_directory'] = indir
+
         metrics[k] = _class(**v)
 
     # loop through parsed metrics and generate figures
-#    import pdb; pdb.set_trace()
+    mods = modules()
+    data = []
     for k, v in metrics.items():
-        # set the output figure to save in the output_directory
-        v.figure_name = os.path.join(report_params['output_dir'],
-                                     v.figure_name)
-        cmd = v.run_cmd()
-        cmd.append(f'--working-dir={report_params["input_dir"]}')
-        print(cmd)
-        run(cmd)
+        series = v.get_series()
+
+        # generate the figure
+        module = mods.lookup(v.__class__.__name__)
+        plots = []
+        for series_type, series_data in series.items():
+            method = getattr(module, series_type)
+            plots.append(method(**series_data))
+
+        # generate plots for each metric.
+        method = getattr(module, 'plot')
+        outpath = os.path.join(outdir,
+                               series_data['figure_name'] + '.png')
+        method(plots, outpath,
+               rcParams=series_data['figure'].rcParams,
+               axis_dict=series_data['figure'].axis,
+               figure_dict=series_data['figure'].figure)
+        data.append({'caption': series_data['figure_caption'],
+                     'img_path': outpath})
+
+    Loader = jinja2.FileSystemLoader('./templates')
+    env = jinja2.Environment(loader=Loader)
+    template = env.get_template('template.html')
+    with open(os.path.join(outdir, 'report.html'), 'w') as f:
+        f.write(template.render(dat=data))
+
+
+
+#        # set the output figure to save in the output_directory
+#        v.figure_name = os.path.join(report_params['output_directory'],
+#                                     v.figure_name)
+#        cmd = v.run_cmd()
+#        cmd.append(f'--working-dir={report_params["input_directory"]}')
+#        print(cmd)
+#        run(cmd)
 
     # generate report document
 
