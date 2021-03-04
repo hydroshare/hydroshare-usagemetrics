@@ -11,13 +11,16 @@ from datetime import datetime
 import series_models as models
 from subprocess import Popen, PIPE
 
+import plot
 import users
+
 
 class modules():
     module_map = {'user': users}
 
     def lookup(self, type):
         return self.module_map.get(type, None)
+
 
 def read_config(yaml_path):
     """
@@ -114,18 +117,20 @@ if __name__ == '__main__':
     # loop through parsed metrics and generate figures
     mods = modules()
     data = []
-    for k, v in metrics.items():
-        series = v.get_series()
+    import pdb; pdb.set_trace()
+    for metric_name, metric_data in metrics.items():
+        series = metric_data.get_series()
+        figure_data = metric_data.figure
 
         # generate the figure
-        module = mods.lookup(v.__class__.__name__)
+        module = mods.lookup(metric_data.__class__.__name__)
         plots = []
         for series_type, series_data in series.items():
             method = getattr(module, series_type)
             plots.append(method(**series_data))
 
         # generate plots for each metric.
-        method = getattr(module, 'plot')
+        method = getattr(plot, series_data['figure'].type)
         outpath = os.path.join(outdir,
                                series_data['figure_name'] + '.png')
         method(plots, outpath,
@@ -142,34 +147,3 @@ if __name__ == '__main__':
         f.write(template.render(dat=data))
 
 
-
-#        # set the output figure to save in the output_directory
-#        v.figure_name = os.path.join(report_params['output_directory'],
-#                                     v.figure_name)
-#        cmd = v.run_cmd()
-#        cmd.append(f'--working-dir={report_params["input_directory"]}')
-#        print(cmd)
-#        run(cmd)
-
-    # generate report document
-
-
-#    # build the output directory
-#    wrkdir = datetime.strftime(datetime.today(), '%m.%d.%Y')
-#    report_dir = os.path.join(wrkdir, 'tex')
-#    data_dir = os.path.join(wrkdir, 'data')
-#    report_fn = f'%s-hydroshare-metrics' % \
-#                datetime.strftime(datetime.today(), '%Y.%m.%d')
-#
-#    fig_dir = os.path.join(wrkdir, 'fig')
-#    if not os.path.exists(fig_dir):
-#        os.makedirs(fig_dir)
-#
-#    if not os.path.exists(report_dir):
-#        os.makedirs(report_dir)
-#
-##    generate_figures(data_dir, '../fig')
-##    create_report(report_dir, fig_dir, report_fn=report_fn)
-##    pdf = f'%s.pdf' % report_fn
-##    shutil.move(join(report_dir, pdf),
-##                join(wrkdir, pdf))

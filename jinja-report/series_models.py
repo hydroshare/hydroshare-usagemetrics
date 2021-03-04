@@ -22,17 +22,20 @@ class report():
         if self.input_dir is None:
             raise ValueError('Missing required field: "input_dir"')
 
+
 @dataclass
 class Series():
     type: str
     color: str = 'b'
     linestyle: str = '-'
 
+
 @dataclass
 class Figure():
     axis: dict = field(default_factory=dict)
     figure: dict = field(default_factory=dict)
     rcParams: dict = field(default_factory=dict)
+    type: str = 'line'
 
 
 @dataclass
