@@ -170,7 +170,7 @@ if __name__ == '__main__':
     template = env.get_template('template.html')
     rpt_path = os.path.join(outdir, 'report.html')
     with open(rpt_path, 'w') as f:
-        f.write(template.render(dat=data))
+        f.write(template.render(report_data=report_params, dat=data))
 
     print('\nReport Build Complete')
     print(f'--> report saved to {rpt_path}\n')

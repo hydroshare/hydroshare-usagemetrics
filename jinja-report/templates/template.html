@@ -12,12 +12,16 @@
 		background-color: #d3d3d359;
 		padding: 1 50;
 	    }
+	    {{ report_data['css'] }}
     
 	</style>
     </head>
     <body>
 	<div class=preamble>
-	<h1> HydroShare Metrics Report </h1>
+	    <h1> {{ report_data['title'] }} </h1>
+	    <p> Created By: {{ report_data['creator'] }} </p>
+	    <p> Date Created: {{ report_data['date_created'] }} </p>
+	    <p> {{ report_data['description'] }} </p>
 	</div>
 
 	{% for i in range(dat|count) %}

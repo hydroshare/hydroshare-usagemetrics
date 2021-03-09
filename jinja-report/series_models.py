@@ -15,6 +15,10 @@ This file contains the class models for each series type
 class report():
     output_dir: str = None
     input_dir: str = None
+    creator: str = ''
+    date_created: datetime = datetime.today()
+    description: str = ''
+    title: str = ''
 
     def __post_init__(self):
         if self.output_dir is None:
