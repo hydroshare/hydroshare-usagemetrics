@@ -31,7 +31,7 @@ class PlotObject(object):
 
 def line(plotObjs_ax1,
          filename,
-         plotObjs_ax2=[],
+#         plotObjs_ax2=[],
          axis_dict={},
          figure_dict={},
          rcParams={},
@@ -59,39 +59,35 @@ def line(plotObjs_ax1,
                 color=pobj.color,
                 linestyle=pobj.linestyle,
                 label=pobj.label)
+
         # annotate the last point
-        ax.text(pobj.x[-1] + timedelta(days=5), # x-loc
-                pobj.y[-1], # y-loc
-                pobj.y[-1], # text value
-                bbox=dict(boxstyle='square,pad=0.5',
-                          fc='none', # foreground color
-                          ec='none', # edge color
-                          ))
-
-    ax.grid()
-
-    if len(plotObjs_ax2) > 0:
-        ax2 = ax.twinx()
-        for pobj in plotObjs_ax2:
-            ax2.plot(pobj.x, pobj.y,
-                     color=pobj.color,
-                     linestyle=pobj.style,
-                     label=pobj.label)
+        if figure_dict.pop('annotate', False):
+            ax.text(pobj.x[-1] + timedelta(days=5), # x-loc
+                    pobj.y[-1], # y-loc
+                    int(round(pobj.y[-1], 0)), # text value
+                    bbox=dict(boxstyle='square,pad=0.5',
+                              fc='none', # foreground color
+                              ec='none', # edge color
+                              ))
+    # turn on the grid
+    if figure_dict.pop('grid', False):
+        ax.grid()
 
     # add a legend
-    plt.legend()
+    if figure_dict.pop('legend', False):
+        plt.legend()
 
     # add monthly minor ticks
     months = mdates.MonthLocator()
     ax.xaxis.set_minor_locator(months)
-    
+
     # set plot attributes
     for k, v in axis_dict.items():
         # eval if string is a tuple
         if '(' in v:
             v = eval(v)
         getattr(ax, 'set_'+k)(v)
-    
+
     for k, v in figure_dict.items():
         getattr(plt, k)(v)
 

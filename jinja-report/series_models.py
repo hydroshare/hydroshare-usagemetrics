@@ -38,6 +38,9 @@ class Figure():
     type: str = 'line'
     caption: str = ''
     title: str = ''
+    annotate: bool = False
+    grid: bool = False
+    legend: bool = False
 
 
 class Base():

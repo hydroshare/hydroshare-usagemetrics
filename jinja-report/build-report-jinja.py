@@ -134,7 +134,7 @@ if __name__ == '__main__':
             module = mods.lookup(metric_data.__class__.__name__)
             plots = []
             for series_type, series_data in series.items():
-                
+
                 method = getattr(module, series_type)
                 pltobj = method(**series_data)
                 plots.append(pltobj)

@@ -31,6 +31,10 @@ metrics:
         xlabel: Date
         ylabel: Number of Users
         ylim: (0.0, None)
+      figure:
+        annotate: True
+        grid: True
+        legend: True
 
   users-active-30-day:
     metric_type: user
@@ -67,6 +71,11 @@ metrics:
         xlabel: Date
         ylabel: Number of Users
         ylim: (0.0, None)
+      figure:
+        annotate: True
+        grid: True
+        legend: True
+
   users-active-180-day:
     metric_type: user
     start_time: 01-01-2015
@@ -101,6 +110,11 @@ metrics:
         xlabel: Date
         ylabel: Number of Users
         ylim: (0.0, None)
+      figure:
+        annotate: True
+        grid: True
+        legend: True
+
   users-all-180-day:
     metric_type: user
     start_time: 01-01-2015 
@@ -135,5 +149,10 @@ metrics:
         xlabel: Date
         ylabel: Number of Users
         ylim: (0.0, None)
+      figure:
+        annotate: True
+        grid: True
+        legend: True
+
 
 

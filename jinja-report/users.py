@@ -105,13 +105,10 @@ def total(input_directory='.',
     # create plot object
     x = ds.index
     y = ds.values.tolist()
-    return (pandas.DataFrame({'date': x,
-                              label: y}),
-            plot.PlotObject(x, y,
+    return plot.PlotObject(x, y,
                             label=label,
                             color=color,
                             linestyle=linestyle)
-            )
 
 
 
@@ -164,9 +161,7 @@ def active(input_directory='',
     plot_obj = plot.PlotObject(x, y, label=label,
                                color=color, linestyle=linestyle)
 
-    return (pandas.DataFrame({'date': x,
-                             label: y}),
-            plot_obj)
+    return plot_obj
 
 
 def new(input_directory='.',
@@ -202,14 +197,11 @@ def new(input_directory='.',
         t += timedelta(days=step)
 
     # create plot object
-    return (pandas.DataFrame({'date': x,
-                              label: y}),
-            plot.PlotObject(x,
+    return plot.PlotObject(x,
                             y,
                             label=label,
                             color=color,
                             linestyle=linestyle)
-            )
 
 
 def returning(input_directory='.',
@@ -261,160 +253,157 @@ def returning(input_directory='.',
         t += timedelta(days=step)
 
     # create plot object
-    return (pandas.DataFrame({'date': x,
-                              label: y}),
-            plot.PlotObject(x,
+    return plot.PlotObject(x,
                             y,
                             label=label,
                             color=color,
                             linestyle=linestyle)
-            )
 
 
-def users_by_type(working_dir, st, et, utypes='University Faculty', agg='1D'):
-
-    # load the data based on working directory
-    df = load_data(working_dir, 'users.pkl')
-    df = subset_by_date(df, st, et)
-
-    # define HS user types
-    usertypes = ['Unspecified', 'Post-Doctoral Fellow',
-                 'Commercial/Professional', 'University Faculty',
-                 'Government Official', 'University Graduate Student',
-                 'Professional', 'University Professional or Research Staff',
-                 'Local Government', 'University Undergraduate Student',
-                 'School Student Kindergarten to 12th Grade',
-                 'School Teacher Kindergarten to 12th Grade', 'Other']
-
-    # clean the data
-    df.loc[~df.usr_type.isin(usertypes), 'usr_type'] = 'Other'
-
-    # loop through each of the user types
-    plots = []
-    colors = iter(cm.jet(numpy.linspace(0, 1, len(utypes))))
-    for utype in utypes:
-
-        # group by user type
-        du = df.loc[df.usr_type == utype]
-
-        # remove null values
-        du = du.dropna()
-
-        # group by date frequency
-        ds = du.groupby(pandas.Grouper(freq=agg)).count().usr_type.cumsum()
-        x = ds.index.values
-        y = ds.values
-        c = next(colors)
-
-        # create plot object
-        plots.append(plot.PlotObject(x, y, label=utype, color=c, linestyle='-'))
-
-    return (df, plots)
-
-
-if __name__ == "__main__":
-
-    parser = argparse.ArgumentParser(description='general user statistics')
-    parser.add_argument('--working-dir',
-                        help='path to directory containing elasticsearch data',
-                        required=True)
-    parser.add_argument('--step',
-                        help='timestep to use in aggregation in days',
-                        default=10)
-    parser.add_argument('--active-range',
-                        help='number of days that qualify a user as active',
-                        default=90)
-    parser.add_argument('--figure-title',
-                        help='title for the output figure',
-                        default='HydroShare User Summary %s' \
-                        % datetime.now().strftime('%m-%d-%Y') )
-    parser.add_argument('--filename',
-                        help='filename for the output figure',
-                        default='hydroshare-users.png')
-    parser.add_argument('--st',
-                        help='start time MM-DD-YYYY (UTC)',
-                        default='01-01-2000')
-    parser.add_argument('--et',
-                        help='start time MM-DD-YYYY (UTC)',
-                        default=datetime.now().strftime('%m-%d-%Y'))
-    parser.add_argument('-t',
-                        help='plot total users line',
-                        action='store_true')
-    parser.add_argument('-a',
-                        help='plot active users line',
-                        action='store_true')
-    parser.add_argument('-n',
-                        help='plot new users line',
-                        action='store_true')
-    parser.add_argument('-r',
-                        help='plot returning users line',
-                        action='store_true')
-    parser.add_argument('-u',
-                        help='plot user types',
-                        action='store_true')
-    parser.add_argument('--utypes',
-                        nargs='+',
-                        help='user types to plot. use this arg with "-u"',
-                        default=[])
-    parser.add_argument('--agg',
-                        help='aggregation to use, e.g. 1W. use this arg with "-u"',
-                        default='1W')
-
-    args = parser.parse_args()
-
-    ######### check date formats #########
-    st_str = args.st
-    et_str = args.et
-    try:
-        st = datetime.strptime(st_str, '%m-%d-%Y')
-    except ValueError:
-        st = datetime.strptime('01-01-2000', '%m-%d-%Y')
-        print('\tincorrect start date format, using default start date: 01-01-2000')
-    try:
-        et = datetime.strptime(et_str, '%m-%d-%Y')
-    except ValueError:
-        et = datetime.now()
-        print('\tincorrect end date format, using default start date: %s' % et.strftime('%m-%d-%Y'))
-
-    # set timezone to UTC
-    st = pytz.utc.localize(st)
-    et = pytz.utc.localize(et)
-
-    print(args.working_dir)
-    # check that dat exist
-    if not os.path.exists(os.path.join(args.working_dir, 'activity.pkl')):
-        print('\n\tcould not find \'activity.pkl\', skipping.'
-              '\n\trun \'collect_hs_data\' to retrieve these missing data')
-    else:
-        # cast input strings to integers
-        step = int(args.step)
-        activedays = int(args.active_range)
-
-        plots = []
-        if args.t:
-            data, res = total(args.working_dir, st, et,
-                              step)
-            plots.append(res)
-        if args.a:
-            data, res = active(args.working_dir, st, et,
-                               activedays, step)
-            plots.append(res)
-        if args.n:
-            data, res = new(args.working_dir, st, et,
-                            activedays, step)
-            plots.append(res)
-        if args.r:
-            data, res = returning(args.working_dir, st, et,
-                                  activedays, step)
-            plots.append(res)
-        if args.u:
-            data, res = users_by_type(args.working_dir, st, et,
-                                      utypes=args.utypes,
-                                      agg=args.agg)
-            plots.extend(res)
-
-        if len(plots) > 0:
-            plot.plot_line(plots, args.filename,
-                           title=args.figure_title,
-                           ylabel='Number of Users',
-                           xlabel='Date')
+#def users_by_type(working_dir, st, et, utypes='University Faculty', agg='1D'):
+#
+#    # load the data based on working directory
+#    df = load_data(working_dir, 'users.pkl')
+#    df = subset_by_date(df, st, et)
+#
+#    # define HS user types
+#    usertypes = ['Unspecified', 'Post-Doctoral Fellow',
+#                 'Commercial/Professional', 'University Faculty',
+#                 'Government Official', 'University Graduate Student',
+#                 'Professional', 'University Professional or Research Staff',
+#                 'Local Government', 'University Undergraduate Student',
+#                 'School Student Kindergarten to 12th Grade',
+#                 'School Teacher Kindergarten to 12th Grade', 'Other']
+#
+#    # clean the data
+#    df.loc[~df.usr_type.isin(usertypes), 'usr_type'] = 'Other'
+#
+#    # loop through each of the user types
+#    plots = []
+#    colors = iter(cm.jet(numpy.linspace(0, 1, len(utypes))))
+#    for utype in utypes:
+#
+#        # group by user type
+#        du = df.loc[df.usr_type == utype]
+#
+#        # remove null values
+#        du = du.dropna()
+#
+#        # group by date frequency
+#        ds = du.groupby(pandas.Grouper(freq=agg)).count().usr_type.cumsum()
+#        x = ds.index.values
+#        y = ds.values
+#        c = next(colors)
+#
+#        # create plot object
+#        plots.append(plot.PlotObject(x, y, label=utype, color=c, linestyle='-'))
+#
+#    return plots
+#
+#
+#if __name__ == "__main__":
+#
+#    parser = argparse.ArgumentParser(description='general user statistics')
+#    parser.add_argument('--working-dir',
+#                        help='path to directory containing elasticsearch data',
+#                        required=True)
+#    parser.add_argument('--step',
+#                        help='timestep to use in aggregation in days',
+#                        default=10)
+#    parser.add_argument('--active-range',
+#                        help='number of days that qualify a user as active',
+#                        default=90)
+#    parser.add_argument('--figure-title',
+#                        help='title for the output figure',
+#                        default='HydroShare User Summary %s' \
+#                        % datetime.now().strftime('%m-%d-%Y') )
+#    parser.add_argument('--filename',
+#                        help='filename for the output figure',
+#                        default='hydroshare-users.png')
+#    parser.add_argument('--st',
+#                        help='start time MM-DD-YYYY (UTC)',
+#                        default='01-01-2000')
+#    parser.add_argument('--et',
+#                        help='start time MM-DD-YYYY (UTC)',
+#                        default=datetime.now().strftime('%m-%d-%Y'))
+#    parser.add_argument('-t',
+#                        help='plot total users line',
+#                        action='store_true')
+#    parser.add_argument('-a',
+#                        help='plot active users line',
+#                        action='store_true')
+#    parser.add_argument('-n',
+#                        help='plot new users line',
+#                        action='store_true')
+#    parser.add_argument('-r',
+#                        help='plot returning users line',
+#                        action='store_true')
+#    parser.add_argument('-u',
+#                        help='plot user types',
+#                        action='store_true')
+#    parser.add_argument('--utypes',
+#                        nargs='+',
+#                        help='user types to plot. use this arg with "-u"',
+#                        default=[])
+#    parser.add_argument('--agg',
+#                        help='aggregation to use, e.g. 1W. use this arg with "-u"',
+#                        default='1W')
+#
+#    args = parser.parse_args()
+#
+#    ######### check date formats #########
+#    st_str = args.st
+#    et_str = args.et
+#    try:
+#        st = datetime.strptime(st_str, '%m-%d-%Y')
+#    except ValueError:
+#        st = datetime.strptime('01-01-2000', '%m-%d-%Y')
+#        print('\tincorrect start date format, using default start date: 01-01-2000')
+#    try:
+#        et = datetime.strptime(et_str, '%m-%d-%Y')
+#    except ValueError:
+#        et = datetime.now()
+#        print('\tincorrect end date format, using default start date: %s' % et.strftime('%m-%d-%Y'))
+#
+#    # set timezone to UTC
+#    st = pytz.utc.localize(st)
+#    et = pytz.utc.localize(et)
+#
+#    print(args.working_dir)
+#    # check that dat exist
+#    if not os.path.exists(os.path.join(args.working_dir, 'activity.pkl')):
+#        print('\n\tcould not find \'activity.pkl\', skipping.'
+#              '\n\trun \'collect_hs_data\' to retrieve these missing data')
+#    else:
+#        # cast input strings to integers
+#        step = int(args.step)
+#        activedays = int(args.active_range)
+#
+#        plots = []
+#        if args.t:
+#            data, res = total(args.working_dir, st, et,
+#                              step)
+#            plots.append(res)
+#        if args.a:
+#            data, res = active(args.working_dir, st, et,
+#                               activedays, step)
+#            plots.append(res)
+#        if args.n:
+#            data, res = new(args.working_dir, st, et,
+#                            activedays, step)
+#            plots.append(res)
+#        if args.r:
+#            data, res = returning(args.working_dir, st, et,
+#                                  activedays, step)
+#            plots.append(res)
+#        if args.u:
+#            data, res = users_by_type(args.working_dir, st, et,
+#                                      utypes=args.utypes,
+#                                      agg=args.agg)
+#            plots.extend(res)
+#
+#        if len(plots) > 0:
+#            plot.plot_line(plots, args.filename,
+#                           title=args.figure_title,
+#                           ylabel='Number of Users',
+#                           xlabel='Date')
