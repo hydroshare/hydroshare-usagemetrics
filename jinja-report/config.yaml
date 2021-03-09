@@ -20,7 +20,8 @@ report:
   creator: Tony Castronova
   date_created: 03/09/2021
   title: HydroShare Usage Report
-  description: this is the report description.
+  description: |
+    This document contains figures and statistics about HydroShare users, their activity, and their distribution among domains in the community. The figures contained in in this document are intended to be used to understand the general adoption and use of the HydroShare platform. All data used to generate these figures are available in the public HydroShare metrics ElasticSearch database which can be found at: http://usagemetrics.hydroshare.org.
   css: |
     .preamble {
       background-color: #d3d3d359;

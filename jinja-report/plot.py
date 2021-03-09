@@ -54,6 +54,7 @@ def line(plotObjs_ax1,
     plt.xticks(rotation=45)
     plt.subplots_adjust(bottom=0.25)
 
+    annotate = figure_dict.pop('annotate', False)
     for pobj in plotObjs_ax1:
         ax.plot(pobj.x, pobj.y,
                 color=pobj.color,
@@ -61,7 +62,7 @@ def line(plotObjs_ax1,
                 label=pobj.label)
 
         # annotate the last point
-        if figure_dict.pop('annotate', False):
+        if annotate:
             ax.text(pobj.x[-1] + timedelta(days=5), # x-loc
                     pobj.y[-1], # y-loc
                     int(round(pobj.y[-1], 0)), # text value

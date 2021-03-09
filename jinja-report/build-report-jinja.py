@@ -151,7 +151,6 @@ if __name__ == '__main__':
 
             # generate plots for each metric.
             method = getattr(plot, series_data['figure'].type)
-
             method(plots, outpath,
                    rcParams=metric_data.figure.rcParams,
                    axis_dict=metric_data.figure.axis,
