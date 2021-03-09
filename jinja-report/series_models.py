@@ -36,20 +36,20 @@ class Figure():
     figure: dict = field(default_factory=dict)
     rcParams: dict = field(default_factory=dict)
     type: str = 'line'
+    caption: str = ''
+    title: str = ''
 
 
 @dataclass
 class user():
     series: List[Series]
     figure: Figure = field(default_factory=Figure)
-    figure_name: str = ''
-    figure_caption: str = ''
     input_directory: str = '.'
     start_time: str = '01-01-2000'
     end_time: str = '01-01-2025'
-    executable: str = 'users.py'
     active_range: int = 30
     step: str = 1
+    save_data: bool = False
 
     def get_series(self):
 

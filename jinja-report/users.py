@@ -2,7 +2,6 @@
 
 import os
 import pytz
-import plot
 import numpy
 import pandas
 import argparse
@@ -10,11 +9,13 @@ from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from matplotlib.pyplot import cm
-
 from pandas.plotting import register_matplotlib_converters
+
+import plot
+import utilities
+
+
 register_matplotlib_converters()
-
-
 def load_data(workingdir, pickle_file='users.pkl'):
 
     # load the activity data
@@ -104,7 +105,13 @@ def total(input_directory='.',
     # create plot object
     x = ds.index
     y = ds.values.tolist()
-    return plot.PlotObject(x, y, label=label, color=color, linestyle=linestyle)
+    return (pandas.DataFrame({'date': x,
+                              label: y}),
+            plot.PlotObject(x, y,
+                            label=label,
+                            color=color,
+                            linestyle=linestyle)
+            )
 
 
 
@@ -157,12 +164,9 @@ def active(input_directory='',
     plot_obj = plot.PlotObject(x, y, label=label,
                                color=color, linestyle=linestyle)
 
-    with open(f'{input_directory}/active-users-{active_range}.csv', 'w') as f:
-        f.write(f'Date,Number of Active Users (logged in with {active_range} days)\n')
-        for i in range(0, len(x)):
-            f.write(f'{str(x[i])},{y[i]}\n')
-
-    return plot_obj
+    return (pandas.DataFrame({'date': x,
+                             label: y}),
+            plot_obj)
 
 
 def new(input_directory='.',
@@ -198,7 +202,14 @@ def new(input_directory='.',
         t += timedelta(days=step)
 
     # create plot object
-    return plot.PlotObject(x, y, label=label, color=color, linestyle=linestyle)
+    return (pandas.DataFrame({'date': x,
+                              label: y}),
+            plot.PlotObject(x,
+                            y,
+                            label=label,
+                            color=color,
+                            linestyle=linestyle)
+            )
 
 
 def returning(input_directory='.',
@@ -250,7 +261,14 @@ def returning(input_directory='.',
         t += timedelta(days=step)
 
     # create plot object
-    return plot.PlotObject(x, y, label=label, color=color, linestyle=linestyle)
+    return (pandas.DataFrame({'date': x,
+                              label: y}),
+            plot.PlotObject(x,
+                            y,
+                            label=label,
+                            color=color,
+                            linestyle=linestyle)
+            )
 
 
 def users_by_type(working_dir, st, et, utypes='University Faculty', agg='1D'):
@@ -291,7 +309,7 @@ def users_by_type(working_dir, st, et, utypes='University Faculty', agg='1D'):
         # create plot object
         plots.append(plot.PlotObject(x, y, label=utype, color=c, linestyle='-'))
 
-    return plots
+    return (df, plots)
 
 
 if __name__ == "__main__":
@@ -374,26 +392,27 @@ if __name__ == "__main__":
 
         plots = []
         if args.t:
-            res = total(args.working_dir, st, et,
-                        step)
+            data, res = total(args.working_dir, st, et,
+                              step)
             plots.append(res)
         if args.a:
-            res = active(args.working_dir, st, et,
-                         activedays, step)
+            data, res = active(args.working_dir, st, et,
+                               activedays, step)
             plots.append(res)
         if args.n:
-            res = new(args.working_dir, st, et,
-                      activedays, step)
-            plots.append(res)
-        if args.r:
-            res = returning(args.working_dir, st, et,
+            data, res = new(args.working_dir, st, et,
                             activedays, step)
             plots.append(res)
+        if args.r:
+            data, res = returning(args.working_dir, st, et,
+                                  activedays, step)
+            plots.append(res)
         if args.u:
-            res = users_by_type(args.working_dir, st, et,
-                                utypes=args.utypes,
-                                agg=args.agg)
+            data, res = users_by_type(args.working_dir, st, et,
+                                      utypes=args.utypes,
+                                      agg=args.agg)
             plots.extend(res)
+
         if len(plots) > 0:
             plot.plot_line(plots, args.filename,
                            title=args.figure_title,

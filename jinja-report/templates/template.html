@@ -8,18 +8,28 @@
 	        justify-content: center;
 	        margin: 50;
 	    }
+	    .preamble {
+		background-color: #d3d3d359;
+		padding: 1 50;
+	    }
     
 	</style>
     </head>
     <body>
+	<div class=preamble>
+	<h1> HydroShare Metrics Report </h1>
+	</div>
 
 	{% for i in range(dat|count) %}
-	    <img src={{ dat[i]['img_path'] }}>
-	    <p>
-		<b> Figure {{ i + 1 }}:</b>
-		{{ dat[i]['caption'] }}
-	    </p>
-	    <hr>
+	    <div class=figure>
+		<h2> {{ dat[i]['title'] }} </h2>
+        	<img src={{ dat[i]['img_path'] }}>
+        	<p>
+		    <b> Figure {{ i + 1 }}:</b>
+        		{{ dat[i]['caption'] }}
+        	</p>
+        	<hr/>
+	    </div>
 	{% endfor %}
 
     </body>

@@ -13,6 +13,7 @@ from subprocess import Popen, PIPE
 
 import plot
 import users
+import utilities
 
 
 class modules():
@@ -70,6 +71,8 @@ if __name__ == '__main__':
     p = argparse.ArgumentParser()
     p.add_argument('yaml_data',
                    help='yaml configuration file')
+    p.add_argument('--re-build', action='store_true', default=False,
+                   help='rebuild from cache')
     args = p.parse_args()
 
     with open(args.yaml_data, 'r') as f:
@@ -112,38 +115,63 @@ if __name__ == '__main__':
         _class = getattr(models, mtype)
         v['input_directory'] = indir
 
+#        # add figure_name to dict
+#        v['name'] = k
+#
+#        # add output directory to dict
+#        v['output_directory'] = outdir
+
         metrics[k] = _class(**v)
 
     # loop through parsed metrics and generate figures
     mods = modules()
     data = []
-    import pdb; pdb.set_trace()
     for metric_name, metric_data in metrics.items():
+        print(f'\nCreating Figure: {metric_name}')
         series = metric_data.get_series()
         figure_data = metric_data.figure
+        outpath = os.path.join(outdir, metric_name + '.png')
+        plot_data = {}
 
-        # generate the figure
-        module = mods.lookup(metric_data.__class__.__name__)
-        plots = []
-        for series_type, series_data in series.items():
-            method = getattr(module, series_type)
-            plots.append(method(**series_data))
+        if not args.re_build:
+            # generate the figure
+            module = mods.lookup(metric_data.__class__.__name__)
+            plots = []
+            for series_type, series_data in series.items():
+                method = getattr(module, series_type)
+                pltdata, pltobj = method(**series_data)
+                plots.append(pltobj)
 
-        # generate plots for each metric.
-        method = getattr(plot, series_data['figure'].type)
-        outpath = os.path.join(outdir,
-                               series_data['figure_name'] + '.png')
-        method(plots, outpath,
-               rcParams=series_data['figure'].rcParams,
-               axis_dict=series_data['figure'].axis,
-               figure_dict=series_data['figure'].figure)
-        data.append({'caption': series_data['figure_caption'],
+                # save the plot data if indicated in the yaml
+                if series_data.get('save_data', False):
+                    dat_path = os.path.join(outdir, f'{metric_name}.csv')
+                    if dat_path in plot_data.keys():
+                        plot_data[dat_path].append(pltdata)
+                    else:
+                        plot_data[dat_path] = [pltdata]
+
+            # generate plots for each metric.
+            method = getattr(plot, series_data['figure'].type)
+
+            method(plots, outpath,
+                   rcParams=metric_data.figure.rcParams,
+                   axis_dict=metric_data.figure.axis,
+                   figure_dict=metric_data.figure.figure)
+
+        # save plot data
+        utilities.save_data_to_csv(plot_data)
+
+        data.append({'caption': metric_data.figure.caption,
+                     'title': metric_data.figure.title,
                      'img_path': outpath})
 
+    print('Building report html')
     Loader = jinja2.FileSystemLoader('./templates')
     env = jinja2.Environment(loader=Loader)
     template = env.get_template('template.html')
-    with open(os.path.join(outdir, 'report.html'), 'w') as f:
+    rpt_path = os.path.join(outdir, 'report.html')
+    with open(rpt_path, 'w') as f:
         f.write(template.render(dat=data))
 
-
+    print('\nReport Build Complete')
+    print(f'--> report saved to {rpt_path}\n')
