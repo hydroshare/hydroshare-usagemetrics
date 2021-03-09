@@ -6,153 +6,219 @@ report:
   input_directory: 03.02.2020
   output_directory: 03.02.2020/report
 metrics:
-  resource-total-size:
-    metric_type: resource
-    start_time: 01-01-2015
-    end_time: 03-01-2021
-    aggregation: 1M
-    save_data: True
-    series:
-      - type: total
-        label: Total Cumulative Resources
-        color: b
-        linestyle: '-'
-    figure_configuration:
-      type: line
-      title: Cumulative Resource Size (Aggregated Monthly)
-      caption: |
-        The cumulative storage of all HydroShare resources plotted by the date in which the resource was created. These data are aggregated monthly and then summed cumulatively.
-      rcParams:
-        axes.titlesize: 24
-        axes.labelsize: 16
-        legend.fontsize: 16
-        figure.figsize: 10, 6
-      axis:
-        xlabel: Date
-        ylabel: Number of Users
-        ylim: (0.0, None)
-      figure:
-        annotate: True
-        grid: True
-        legend: True
 
-  users-active-30-day:
-    metric_type: user
+  #  users-active-30-day:
+  #    metric_type: user
+  #    start_time: 01-01-2015
+  #    end_time: 03-01-2021
+  #    active_range: 30
+  #    step: 10
+  #    save_data: True
+  #    series:
+  #      - type: active
+  #        label: Active Users (30 days)
+  #        color: b
+  #        linestyle: '-'
+  #      - type: total
+  #        label: Total Users
+  #        color: k
+  #        linestyle: '-'
+  #      - type: new
+  #        label: New Users
+  #        color: g
+  #        linestyle: '-'
+  #    figure_configuration:
+  #      type: line
+  #      title: Number of HydroShare User Accounts
+  #      caption: |
+  #        (1) Total cumulative HydroShare accounts through time based on the date each account was created, (2) active accounts are defined as those that have logged into HydroShare within the last 30 days, and (3) new accounts defined as those that were created within the active range (i.e. the portion of active users that created an account within the last 30 days).
+  #      rcParams:
+  #        #        font.size: 40.0
+  #        axes.titlesize: 24
+  #        axes.labelsize: 16
+  #        legend.fontsize: 16
+  #        figure.figsize: 10, 6
+  #      axis:
+  #        xlabel: Date
+  #        ylabel: Number of Users
+  #        ylim: (0.0, None)
+  #      figure:
+  #        annotate: True
+  #        grid: True
+  #        legend: True
+  #
+  #  users-active-180-day:
+  #    metric_type: user
+  #    start_time: 01-01-2015
+  #    end_time: 03-01-2021
+  #    active_range: 180
+  #    step: 10
+  #    save_data: True
+  #    series:
+  #      - type: active
+  #        label: Active Users (180 days)
+  #        color: b
+  #        linestyle: '-'
+  #      - type: total
+  #        label: Total Users
+  #        color: k
+  #        linestyle: '-'
+  #      - type: new
+  #        label: New Users
+  #        color: g
+  #        linestyle: '-'
+  #    figure_configuration:
+  #      type: line
+  #      caption: |
+  #        (1) Total cumulative HydroShare accounts through time based on the date each account is created, (2) active accounts defined as users that have logged into HydroShare within the last 180 days, and (3) new accounts defined as HydroShare accounts that were created within the active range (i.e. the portion of active users that created an account within the last 180 days).
+  #      title: Number of HydroShare User Accounts
+  #      rcParams:
+  #        axes.titlesize: 24
+  #        axes.labelsize: 16
+  #        legend.fontsize: 16
+  #        figure.figsize: 10, 6
+  #      axis:
+  #        xlabel: Date
+  #        ylabel: Number of Users
+  #        ylim: (0.0, None)
+  #      figure:
+  #        annotate: True
+  #        grid: True
+  #        legend: True
+  #
+  #  users-all-180-day:
+  #    metric_type: user
+  #    start_time: 01-01-2015 
+  #    end_time: 03-01-2021
+  #    active_range: 180
+  #    step: 10
+  #    save_data: True
+  #    series:
+  #      - type: active
+  #        label: Active Users (180 days)
+  #        color: b
+  #        linestyle: '-'
+  #      - type: returning
+  #        label: Returning Users
+  #        color: r
+  #        linestyle: '-'
+  #      - type: new
+  #        label: New Users
+  #        color: g
+  #        linestyle: '-'
+  #    figure_configuration:
+  #      type: line
+  #      caption: |
+  #        (1) Active accounts defined as users that have logged into HydroShare within the last 180 days, (2) new accounts defined as HydroShare accounts that were created within the active range (i.e. the portion of active users that created an account within the last 180 days), and (3) returning users defined as the portion of active users that created their account outside the active range.
+  #      title: Total HydroShare Users Disaggregated
+  #      rcParams:
+  #        axes.titlesize: 24
+  #        axes.labelsize: 16
+  #        legend.fontsize: 16
+  #        figure.figsize: 10, 6
+  #      axis:
+  #        xlabel: Date
+  #        ylabel: Number of Users
+  #        ylim: (0.0, None)
+  #      figure:
+  #        annotate: True
+  #        grid: True
+  #        legend: True
+  #
+  #  resource-total-size:
+  #    metric_type: resource
+  #    start_time: 01-01-2015
+  #    end_time: 03-01-2021
+  #    aggregation: 1M
+  #    save_data: True
+  #    series:
+  #      - type: total
+  #        label: Total Cumulative Resources
+  #        color: b
+  #        linestyle: '-'
+  #    figure_configuration:
+  #      type: line
+  #      title: Cumulative Resource Size (Aggregated Monthly)
+  #      caption: |
+  #        The cumulative storage of all HydroShare resources plotted by the date in which the resource was created. These data are aggregated monthly and then summed cumulatively.
+  #      rcParams:
+  #        axes.titlesize: 24
+  #        axes.labelsize: 16
+  #        legend.fontsize: 16
+  #        figure.figsize: 10, 6
+  #      axis:
+  #        xlabel: Date
+  #        ylabel: Number of Users
+  #        ylim: (0.0, None)
+  #      figure:
+  #        annotate: True
+  #        grid: True
+  #        legend: True
+
+  organizations-total-line:
+    metric_type: organization
     start_time: 01-01-2015
     end_time: 03-01-2021
-    active_range: 30
-    step: 10
+    aggregation: 1D
     save_data: True
     series:
-      - type: active
-        label: Active Users (30 days)
-        color: b
-        linestyle: '-'
       - type: total
-        label: Total Users
+        label: All Organizations
         color: k
         linestyle: '-'
-      - type: new
-        label: New Users
-        color: g
-        linestyle: '-'
     figure_configuration:
       type: line
-      title: Number of HydroShare User Accounts
+      title: Cumulative Unique Organizations Registered in HydroShare
       caption: |
-        (1) Total cumulative HydroShare accounts through time based on the date each account was created, (2) active accounts are defined as those that have logged into HydroShare within the last 30 days, and (3) new accounts defined as those that were created within the active range (i.e. the portion of active users that created an account within the last 30 days).
+        Cumulative number of unique, user-specified, organizations represented in HydroShare. Values are plotted by the account creation date of the user account that defined the organization. In the event that an organization has been defined multiple times, it is associated with the first account that referenced it.
       rcParams:
-        #        font.size: 40.0
         axes.titlesize: 24
         axes.labelsize: 16
         legend.fontsize: 16
         figure.figsize: 10, 6
       axis:
-        xlabel: Date
-        ylabel: Number of Users
+        xlabel: Account Creation Date
+        ylabel: Number of Organizations
         ylim: (0.0, None)
       figure:
         annotate: True
         grid: True
         legend: True
-
-  users-active-180-day:
-    metric_type: user
+  
+  organizations-us-int-cuahsi:
+    metric_type: organization
     start_time: 01-01-2015
     end_time: 03-01-2021
-    active_range: 180
-    step: 10
+    aggregation: 1D
     save_data: True
     series:
-      - type: active
-        label: Active Users (180 days)
+      - type: us_universities
+        label: US Universities
         color: b
         linestyle: '-'
-      - type: total
-        label: Total Users
-        color: k
-        linestyle: '-'
-      - type: new
-        label: New Users
-        color: g
-        linestyle: '-'
-    figure_configuration:
-      type: line
-      caption: |
-        (1) Total cumulative HydroShare accounts through time based on the date each account is created, (2) active accounts defined as users that have logged into HydroShare within the last 180 days, and (3) new accounts defined as HydroShare accounts that were created within the active range (i.e. the portion of active users that created an account within the last 180 days).
-      title: Number of HydroShare User Accounts
-      rcParams:
-        axes.titlesize: 24
-        axes.labelsize: 16
-        legend.fontsize: 16
-        figure.figsize: 10, 6
-      axis:
-        xlabel: Date
-        ylabel: Number of Users
-        ylim: (0.0, None)
-      figure:
-        annotate: True
-        grid: True
-        legend: True
-
-  users-all-180-day:
-    metric_type: user
-    start_time: 01-01-2015 
-    end_time: 03-01-2021
-    active_range: 180
-    step: 10
-    save_data: True
-    series:
-      - type: active
-        label: Active Users (180 days)
-        color: b
-        linestyle: '-'
-      - type: returning
-        label: Returning Users
+      - type: international_universities
+        label: International Universities
         color: r
         linestyle: '-'
-      - type: new
-        label: New Users
+      - type: cuahsi_members
+        label: CUAHSI Member Institutions
         color: g
         linestyle: '-'
     figure_configuration:
       type: line
+      title: Cumulative Unique Organizations that are Universities and CUAHSI Member Institutions
       caption: |
-        (1) Active accounts defined as users that have logged into HydroShare within the last 180 days, (2) new accounts defined as HydroShare accounts that were created within the active range (i.e. the portion of active users that created an account within the last 180 days), and (3) returning users defined as the portion of active users that created their account outside the active range.
-      title: Total HydroShare Users Disaggregated
+        Cumulative total of unique, user-specified, organizations divided into (1) US universities, (2) CUAHSI member institutions, and (3) international universities. Values are plotted by the account creation date of the user account that defined the organization. In the event that an organization has been defined multiple times, it is associated with the first account that referenced it.
       rcParams:
         axes.titlesize: 24
         axes.labelsize: 16
         legend.fontsize: 16
         figure.figsize: 10, 6
       axis:
-        xlabel: Date
-        ylabel: Number of Users
-        ylim: (0.0, None)
+        xlabel: Account Creation Date
+        ylabel: Number of Organizations
+        ylim: (0.0, 300)
       figure:
         annotate: True
         grid: True
         legend: True
-
-
-

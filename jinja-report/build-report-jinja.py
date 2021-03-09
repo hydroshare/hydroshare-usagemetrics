@@ -15,11 +15,13 @@ import plot
 import users
 import resources
 import utilities
+import organizations
 
 
 class modules():
     module_map = {'user': users,
-                  'resource': resources}
+                  'resource': resources,
+                  'organization': organizations}
 
     def lookup(self, type):
         return self.module_map.get(type, None)

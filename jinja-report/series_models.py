@@ -84,3 +84,14 @@ class resource(Base):
     end_time: str = '01-01-2025'
     save_data: bool = False
     aggregation: str = '1W'
+
+
+@dataclass
+class organization(Base):
+    series: List[Series]
+    figure: Figure = field(default_factory=Figure)
+    input_directory: str = '.'
+    start_time: str = '01-01-2000'
+    end_time: str = '01-01-2025'
+    save_data: bool = False
+    aggregation: str = '1W'
