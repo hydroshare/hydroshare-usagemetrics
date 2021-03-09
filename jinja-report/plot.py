@@ -22,6 +22,12 @@ class PlotObject(object):
         self.linestyle = linestyle
         self.color = color
 
+    @property
+    def df(self):
+        df = pandas.DataFrame(self.y, index=self.x, columns=[self.label])
+        df.index = pandas.to_datetime(df.index)
+        return df
+
 
 def line(plotObjs_ax1,
          filename,
@@ -94,8 +100,8 @@ def line(plotObjs_ax1,
 #        getattr(ax, k)(v)
 
     # save the figure and the data
-    print('--> saving figure as %s' % filename)
     plt.savefig(filename)
+    print(f'--> figure saved to: {filename}')
 
 
 

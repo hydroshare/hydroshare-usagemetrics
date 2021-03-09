@@ -13,11 +13,13 @@ from subprocess import Popen, PIPE
 
 import plot
 import users
+import resources
 import utilities
 
 
 class modules():
-    module_map = {'user': users}
+    module_map = {'user': users,
+                  'resource': resources}
 
     def lookup(self, type):
         return self.module_map.get(type, None)
@@ -115,12 +117,6 @@ if __name__ == '__main__':
         _class = getattr(models, mtype)
         v['input_directory'] = indir
 
-#        # add figure_name to dict
-#        v['name'] = k
-#
-#        # add output directory to dict
-#        v['output_directory'] = outdir
-
         metrics[k] = _class(**v)
 
     # loop through parsed metrics and generate figures
@@ -138,17 +134,18 @@ if __name__ == '__main__':
             module = mods.lookup(metric_data.__class__.__name__)
             plots = []
             for series_type, series_data in series.items():
+                
                 method = getattr(module, series_type)
-                pltdata, pltobj = method(**series_data)
+                pltobj = method(**series_data)
                 plots.append(pltobj)
 
                 # save the plot data if indicated in the yaml
                 if series_data.get('save_data', False):
                     dat_path = os.path.join(outdir, f'{metric_name}.csv')
                     if dat_path in plot_data.keys():
-                        plot_data[dat_path].append(pltdata)
+                        plot_data[dat_path].append(pltobj.df)
                     else:
-                        plot_data[dat_path] = [pltdata]
+                        plot_data[dat_path] = [pltobj.df]
 
             # generate plots for each metric.
             method = getattr(plot, series_data['figure'].type)

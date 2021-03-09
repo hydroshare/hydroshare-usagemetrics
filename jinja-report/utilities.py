@@ -17,8 +17,8 @@ def save_data_to_csv(data_dict, index='date'):
             if type(d) == pandas.Series:
                 d = pandas.DataFrame(d)
 
-            # set the index
-            d.set_index('date', inplace=True)
+#            # set the index
+#            d.set_index('date', inplace=True)
 
             dfs.append(d)
 

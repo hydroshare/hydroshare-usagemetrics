@@ -6,6 +6,32 @@ report:
   input_directory: 03.02.2020
   output_directory: 03.02.2020/report
 metrics:
+  resource-total-size:
+    metric_type: resource
+    start_time: 01-01-2015
+    end_time: 03-01-2021
+    aggregation: 1M
+    save_data: True
+    series:
+      - type: total
+        label: Total Cumulative Resources
+        color: b
+        linestyle: '-'
+    figure_configuration:
+      type: line
+      title: Cumulative Resource Size (Aggregated Monthly)
+      caption: |
+        The cumulative storage of all HydroShare resources plotted by the date in which the resource was created. These data are aggregated monthly and then summed cumulatively.
+      rcParams:
+        axes.titlesize: 24
+        axes.labelsize: 16
+        legend.fontsize: 16
+        figure.figsize: 10, 6
+      axis:
+        xlabel: Date
+        ylabel: Number of Users
+        ylim: (0.0, None)
+
   users-active-30-day:
     metric_type: user
     start_time: 01-01-2015

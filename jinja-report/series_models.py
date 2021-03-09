@@ -40,36 +40,16 @@ class Figure():
     title: str = ''
 
 
-@dataclass
-class user():
-    series: List[Series]
-    figure: Figure = field(default_factory=Figure)
-    input_directory: str = '.'
-    start_time: str = '01-01-2000'
-    end_time: str = '01-01-2025'
-    active_range: int = 30
-    step: str = 1
-    save_data: bool = False
-
+class Base():
     def get_series(self):
-
         s = {}
 
         # set timezone to UTC
         self.start_time = pytz.utc.localize(datetime.strptime(self.start_time, '%m-%d-%Y'))
         self.end_time = pytz.utc.localize(datetime.strptime(self.end_time, '%m-%d-%Y'))
 
-#        args = [self.input_directory,
-#                st, et,
-#                self.active_range,
-#                self.step]
-        
         # get the class attributes that will be returned
         kwargs = self.__dict__
-        
-#        fig_config = kwargs.pop('figure')
-#        fig_config = fig_config.get_config()
-#        kwargs['figure_configuration'] = fig_config
 
         # add each series individually
         series = kwargs.pop('series')
@@ -80,28 +60,24 @@ class user():
 
         return s
 
-        
-#    def __post_init__(self):
-#                s[k]['st'] = datetime.strptime(self.start_time, '%m-%d-%Y')
-#                s[k]['et'] = datetime.strptime(self.end_time, '%m-%d-%Y')
-#                s[k]['active
-#            
-#    def run_cmd(self):
-#        cmd = [f'{self.executable}',
-#               f'--active-range={self.active_range}',
-#               f'--filename={self.figure_name}.png',
-#               f'--figure-title={self.figure_title}',
-#               f'--step={self.step}']
-#        if self.all:
-#            cmd.append('-a')
-#        if self.total:
-#            cmd.append('-t')
-#        if self.new:
-#            cmd.append('-n')
-#
-#        return cmd
-#
+@dataclass
+class user(Base):
+    series: List[Series]
+    figure: Figure = field(default_factory=Figure)
+    input_directory: str = '.'
+    start_time: str = '01-01-2000'
+    end_time: str = '01-01-2025'
+    active_range: int = 30
+    step: str = 1
+    save_data: bool = False
+
 
 @dataclass
-class resource():
-    pass
+class resource(Base):
+    series: List[Series]
+    figure: Figure = field(default_factory=Figure)
+    input_directory: str = '.'
+    start_time: str = '01-01-2000'
+    end_time: str = '01-01-2025'
+    save_data: bool = False
+    aggregation: str = '1W'
