@@ -11,6 +11,7 @@ from datetime import datetime
 import series_models as models
 from subprocess import Popen, PIPE
 
+import doi
 import plot
 import users
 import resources
@@ -21,7 +22,8 @@ import organizations
 class modules():
     module_map = {'user': users,
                   'resource': resources,
-                  'organization': organizations}
+                  'organization': organizations,
+                  'doi': doi}
 
     def lookup(self, type):
         return self.module_map.get(type, None)

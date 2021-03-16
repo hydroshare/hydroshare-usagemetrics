@@ -26,7 +26,7 @@
 
 	{% for i in range(dat|count) %}
 	    <div class=figure>
-		<h2> {{ dat[i]['title'] }} </h2>
+		<h2> Figure {{ i + 1 }}: {{ dat[i]['title'] }} </h2>
         	<img src={{ dat[i]['img_path'] }}>
         	<p>
 		    <b> Figure {{ i + 1 }}:</b>

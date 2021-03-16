@@ -102,4 +102,62 @@ def line(plotObjs_ax1,
 
 
 
+def bar(plotObjs_ax1,
+        filename,
+        width=10,
+        axis_dict={},
+        figure_dict={},
+        rcParams={},
+        **kwargs):
 
+#        title='',
+#              agg='1M', width=.5, annotate=False,
+#              **kwargs):
+
+    print('--> making figure...')
+    
+    # set global plot attributes
+    if rcParams != {}:
+        plt.rcParams.update(rcParams)
+
+    # create figure of these data
+    fig, ax = plt.subplots()
+    plt.xticks(rotation=45)
+    plt.subplots_adjust(bottom=0.25)
+
+    annotate = figure_dict.pop('annotate', False)
+    for pobj in plotObjs_ax1:
+        ax.bar(pobj.x, 
+               pobj.y,
+               width=float(width),
+               color=pobj.color)
+
+        if annotate:
+            for p in ax.patches:
+                height = p.get_height()
+                if height > 0:
+                    ax.annotate("%d" % height,
+                                (p.get_x() + p.get_width() / 2.,
+                                 height),
+                                ha='center',
+                                va='center',
+                                xytext=(0, 10),
+                                textcoords='offset points')
+
+    # add monthly minor ticks
+    months = mdates.MonthLocator()
+    ax.xaxis.set_minor_locator(months)
+
+    # set plot attributes
+    for k, v in axis_dict.items():
+        # eval if string is a tuple
+        if '(' in v:
+            v = eval(v)
+        getattr(ax, 'set_'+k)(v)
+
+    for k, v in figure_dict.items():
+        getattr(plt, k)(v)
+
+    # save the figure and the data
+    plt.savefig(filename)
+    print(f'--> figure saved to: {filename}')

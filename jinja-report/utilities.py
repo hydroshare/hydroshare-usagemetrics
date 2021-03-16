@@ -28,3 +28,20 @@ def save_data_to_csv(data_dict, index='date'):
         df_concat.to_csv(k)
 
         print(f'--> data saved to: {k}')
+
+
+def subset_by_date(dat, st, et, date_column='date'):
+
+    if type(dat) == pandas.DataFrame:
+
+        # select dates between start/end range
+        mask = (dat[date_column] >= st) & (dat[date_column] <= et)
+        dat = dat.loc[mask]
+        return dat
+
+    elif type(dat) == pandas.Series:
+
+        # select dates between start/end range
+        mask = (dat.index >= st) & (dat.index <= et)
+        return dat.loc[mask]
+
