@@ -15,18 +15,25 @@ register_matplotlib_converters()
 
 
 class PlotObject(object):
-    def __init__(self, x, y, label='', color='b', linestyle='-'):
+    def __init__(self, x, y,
+                 dataframe=None,
+                 label='',
+                 color='b',
+                 linestyle='-'):
         self.x = x
         self.y = y
         self.label = label
         self.linestyle = linestyle
         self.color = color
+        self.dataframe = dataframe
 
     @property
     def df(self):
-        df = pandas.DataFrame(self.y, index=self.x, columns=[self.label])
-        df.index = pandas.to_datetime(df.index)
-        return df
+        if self.dataframe is None:
+            _df = pandas.DataFrame(self.y, index=self.x, columns=[self.label])
+            _df.index = pandas.to_datetime(_df.index)
+            return _df
+        return self.dataframe
 
 
 def line(plotObjs_ax1,

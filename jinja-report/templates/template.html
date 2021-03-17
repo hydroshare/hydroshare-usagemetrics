@@ -27,6 +27,9 @@
 	{% for i in range(dat|count) %}
 	    <div class=figure>
 		<h2> Figure {{ i + 1 }}: {{ dat[i]['title'] }} </h2>
+		{% if dat[i]['img_data'] is not none %}
+	    	    <a href="{{ dat[i]['img_data'] }}" download> Download Data </a>
+		{% endif %}
         	<img src={{ dat[i]['img_path'] }}>
         	<p>
 		    <b> Figure {{ i + 1 }}:</b>

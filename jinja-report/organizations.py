@@ -49,6 +49,32 @@ def subset_by_date(dat, st, et):
         return dat.loc[mask]
 
 
+#def total_table(input_directory='.',
+#                start_time=datetime(2000, 1, 1),
+#                end_time=datetime(2030, 1, 1),
+#                num_records=50)
+#    
+#    print('--> calculating total distinct organizations - table')
+#
+#    # load the data based on working directory and subset it if necessary
+#    df = load_data(input_directory)
+#    df = subset_by_date(df, start_time, end_time)
+#
+#    # drop duplicates (except the first occurrence)
+#    df = df.drop_duplicates(subset='usr_organization', keep='first')
+#
+#    # group and cumsum
+#    df = df.sort_index()
+#    ds = df.groupby(pandas.Grouper(freq=aggregation)) \
+#           .usr_organization.nunique().cumsum()
+#    
+#    import pdb; pdb.set_trace()
+#
+#    # create plot object
+#    x = ds.index
+#    y = ds.values.tolist()
+
+
 def total(input_directory='.',
           start_time=datetime(2000, 1, 1),
           end_time=datetime(2030, 1, 1),

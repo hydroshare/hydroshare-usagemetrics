@@ -137,21 +137,25 @@ if __name__ == '__main__':
             # generate the figure
             module = mods.lookup(metric_data.__class__.__name__)
             plots = []
-            for series_type, series_data in series.items():
 
+            # loop through each series that will be plotted to the figure,
+            # compute the data that will be displayed and create line
+            # objects that will be plotted later
+            for series_type, series_data in series.items():
                 method = getattr(module, series_type)
                 pltobj = method(**series_data)
                 plots.append(pltobj)
 
-                # save the plot data if indicated in the yaml
-                if series_data.get('save_data', False):
-                    dat_path = os.path.join(outdir, f'{metric_name}.csv')
-                    if dat_path in plot_data.keys():
-                        plot_data[dat_path].append(pltobj.df)
-                    else:
-                        plot_data[dat_path] = [pltobj.df]
+            # save the plot data for the series in the figure
+            # if indicated in the yaml configuration
+            if metric_data.save_data:
+                dat_path = os.path.join(outdir, f'{metric_name}.csv')
+                if dat_path in plot_data.keys():
+                    plot_data[dat_path].append(pltobj.df)
+                else:
+                    plot_data[dat_path] = [pltobj.df]
 
-            # generate plots for each metric.
+            # generate plot figures for each metric.
             method = getattr(plot, series_data['figure'].type)
             method(plots, outpath,
                    rcParams=metric_data.figure.rcParams,
@@ -160,10 +164,14 @@ if __name__ == '__main__':
 
         # save plot data
         utilities.save_data_to_csv(plot_data)
-
-        data.append({'caption': metric_data.figure.caption,
-                     'title': metric_data.figure.title,
-                     'img_path': outpath})
+        
+        template_dict = {'caption': metric_data.figure.caption,
+                         'title': metric_data.figure.title,
+                         'img_path': outpath,
+                         'img_data': None}
+        if metric_data.save_data:
+            template_dict['img_data'] = os.path.relpath(dat_path, outdir)
+        data.append(template_dict)
 
     print('Building report html')
     Loader = jinja2.FileSystemLoader('./templates')

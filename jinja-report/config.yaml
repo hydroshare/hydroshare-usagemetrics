@@ -31,7 +31,7 @@ report:
 metrics:
   users-active-30-day:
     metric_type: user
-    start_time: 01-01-2015
+    start_time: 01-01-2020
     end_time: 03-01-2021
     active_range: 30
     step: 10
@@ -83,7 +83,7 @@ metrics:
         linestyle: '-'
       - type: active
         label: Users that logged on in previous 180 days
-        color: b
+        color: g
         linestyle: '-'
       - type: new
         label: Users that created accounts in previous 180 days
@@ -271,3 +271,27 @@ metrics:
       figure:
         annotate: False
 
+
+  doi-citation-count:
+    metric_type: doi
+    start_time: 01-01-2015
+    end_time: 03-01-2021
+    aggregation: 1M
+    save_data: True
+    series:
+      - type: citations
+    figure_configuration:
+      type: bar
+      title: Number Citations for Published HydroShare Resources
+      caption: |
+        The total number citations of HydroShare resources that have been issued digital object identifiers (DOIs). The accompanying dataset also contains the dois for publications that cites each of these HydroShare resources.
+      rcParams:
+        axes.titlesize: 24
+        axes.labelsize: 14
+        figure.figsize: 10, 6
+      axis:
+        xlabel: Date
+        ylabel: Number of Citations
+        ylim: (0.0, None)
+      figure:
+        annotate: False
