@@ -164,13 +164,14 @@ if __name__ == '__main__':
 
         # save plot data
         utilities.save_data_to_csv(plot_data)
-        
+
         template_dict = {'caption': metric_data.figure.caption,
                          'title': metric_data.figure.title,
                          'img_path': outpath,
                          'img_data': None}
+
         if metric_data.save_data:
-            template_dict['img_data'] = os.path.relpath(dat_path, outdir)
+            template_dict['img_data'] = f'{metric_name}.csv'
         data.append(template_dict)
 
     print('Building report html')

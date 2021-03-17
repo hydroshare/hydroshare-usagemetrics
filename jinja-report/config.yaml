@@ -31,7 +31,7 @@ report:
 metrics:
   users-active-30-day:
     metric_type: user
-    start_time: 01-01-2020
+    start_time: 01-01-2015
     end_time: 03-01-2021
     active_range: 30
     step: 10
@@ -83,7 +83,7 @@ metrics:
         linestyle: '-'
       - type: active
         label: Users that logged on in previous 180 days
-        color: g
+        color: b
         linestyle: '-'
       - type: new
         label: Users that created accounts in previous 180 days
