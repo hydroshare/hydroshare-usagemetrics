@@ -77,6 +77,7 @@ class user(Base):
     active_range: int = 30
     step: str = 1
     save_data: bool = False
+    aggregation: str = '1D'
 
 
 @dataclass

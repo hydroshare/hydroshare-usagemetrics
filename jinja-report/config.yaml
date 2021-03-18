@@ -295,3 +295,32 @@ metrics:
         ylim: (0.0, None)
       figure:
         annotate: False
+sers-types:
+ metric_type: user
+ start_time: 01-01-2015
+ end_time: 03-01-2021
+ save_data: True
+ series:
+   - type: usertype
+     label: User Types
+     linestyle: '-'
+     #        user_types: ['University Graduate Student', 'University Professional or Research Staff', 'University Faculty']
+ figure_configuration:
+   type: line
+   title: Number of HydroShare User Accounts
+   caption: |
+     (1) Total cumulative HydroShare accounts through time based on the date each account was created, (2) active accounts are defined as those that have logged into HydroShare within the last 30 days, and (3) new accounts defined as those that were created within the active range (i.e. the number of active users that created an account within the last 30 days).
+   rcParams:
+     #        font.size: 40.0
+     axes.titlesize: 24
+     axes.labelsize: 16
+     legend.fontsize: 16
+     figure.figsize: 10, 6
+   axis:
+     xlabel: Date
+     ylabel: Number of Users
+     ylim: (0.0, None)
+   figure:
+     annotate: True
+     grid: True
+     legend: True

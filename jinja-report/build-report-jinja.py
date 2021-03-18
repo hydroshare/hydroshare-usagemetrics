@@ -144,16 +144,15 @@ if __name__ == '__main__':
             for series_type, series_data in series.items():
                 method = getattr(module, series_type)
                 pltobj = method(**series_data)
-                plots.append(pltobj)
 
-            # save the plot data for the series in the figure
-            # if indicated in the yaml configuration
-            if metric_data.save_data:
-                dat_path = os.path.join(outdir, f'{metric_name}.csv')
-                if dat_path in plot_data.keys():
-                    plot_data[dat_path].append(pltobj.df)
+                # some functions return a list of plot objects.
+                # for these, just extend the plots list
+                if type(pltobj) == list:
+                    plots.extend(pltobj)
                 else:
-                    plot_data[dat_path] = [pltobj.df]
+                    # if a single plot is returned (most common case),
+                    # just append it to the plots list
+                    plots.append(pltobj)
 
             # generate plot figures for each metric.
             method = getattr(plot, series_data['figure'].type)
@@ -162,16 +161,30 @@ if __name__ == '__main__':
                    axis_dict=metric_data.figure.axis,
                    figure_dict=metric_data.figure.figure)
 
-        # save plot data
-        utilities.save_data_to_csv(plot_data)
-
+        # initialize a dictionary of data that will be passed to the template
         template_dict = {'caption': metric_data.figure.caption,
                          'title': metric_data.figure.title,
                          'img_path': outpath,
                          'img_data': None}
 
+        # save the plot data for the series in the figure
+        # if indicated in the yaml configuration
         if metric_data.save_data:
+            dat_path = os.path.join(outdir, f'{metric_name}.csv')
+           
+            # save all series dataframes to the plot_data dict
+            # and pass this dict to the utility function
+            plot_data[dat_path] = [p.df for p in plots]
+
+            # save plot data
+            utilities.save_data_to_csv(plot_data)
+
+            # save path to data file in the template dict so it will be
+            # rendered in the report doc.
             template_dict['img_data'] = f'{metric_name}.csv'
+
+        # append metadata for this figure that will be used to render 
+        # the report later.
         data.append(template_dict)
 
     print('Building report html')

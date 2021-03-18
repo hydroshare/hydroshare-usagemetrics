@@ -65,20 +65,20 @@ def load_data(workingdir, pickle_file='users.pkl'):
     return df
 
 
-def subset_by_date(dat, st, et):
-
-    if type(dat) == pandas.DataFrame:
-
-        # select dates between start/end range
-        mask = (dat.date >= st) & (dat.date <= et)
-        dat = dat.loc[mask]
-        return dat
-
-    elif type(dat) == pandas.Series:
-
-        # select dates between start/end range
-        mask = (dat.index >= st) & (dat.index <= et)
-        return dat.loc[mask]
+#def subset_by_date(dat, st, et):
+#
+#    if type(dat) == pandas.DataFrame:
+#
+#        # select dates between start/end range
+#        mask = (dat.date >= st) & (dat.date <= et)
+#        dat = dat.loc[mask]
+#        return dat
+#
+#    elif type(dat) == pandas.Series:
+#
+#        # select dates between start/end range
+#        mask = (dat.index >= st) & (dat.index <= et)
+#        return dat.loc[mask]
 
 
 def total(input_directory='.',
@@ -100,16 +100,15 @@ def total(input_directory='.',
     grp = '%dd' % step
     ds = df.groupby(pandas.Grouper(freq=grp)).count().usr_id.cumsum()
 
-    ds = subset_by_date(ds, start_time, end_time)
+    ds = utilities.subset_by_date(ds, start_time, end_time)
 
     # create plot object
     x = ds.index
     y = ds.values.tolist()
     return plot.PlotObject(x, y,
-                            label=label,
-                            color=color,
-                            linestyle=linestyle)
-
+                           label=label,
+                           color=color,
+                           linestyle=linestyle)
 
 
 def active(input_directory='',
@@ -131,15 +130,15 @@ def active(input_directory='',
 
     # load the data based on working directory
     df = load_data(input_directory, 'activity.pkl')
-    df = subset_by_date(df, start_time, end_time)
+    df = utilities.subset_by_date(df, start_time, end_time)
     df = df.sort_index()
 
     dfu = load_data(input_directory, 'users.pkl')
-    dfu = subset_by_date(dfu, start_time, end_time)
+    dfu = utilities.subset_by_date(dfu, start_time, end_time)
 
     x, y = [], []
 
-    # set the start date as the earliest available date plus the 
+    # set the start date as the earliest available date plus the
     # active date range
     t = df.date.min() + timedelta(days=active_range)
     while t < end_time:
@@ -176,7 +175,7 @@ def new(input_directory='.',
 
     # load the data based on working directory
     df = load_data(input_directory)
-    df = subset_by_date(df, start_time, end_time)
+    df = utilities.subset_by_date(df, start_time, end_time)
 
     print('--> calculating new users')
     x = []
@@ -198,10 +197,10 @@ def new(input_directory='.',
 
     # create plot object
     return plot.PlotObject(x,
-                            y,
-                            label=label,
-                            color=color,
-                            linestyle=linestyle)
+                           y,
+                           label=label,
+                           color=color,
+                           linestyle=linestyle)
 
 
 def returning(input_directory='.',
@@ -216,15 +215,15 @@ def returning(input_directory='.',
 
     # load the data based on working directory
     df = load_data(input_directory, 'users.pkl')
-    df = subset_by_date(df, start_time, end_time)
+    df = utilities.subset_by_date(df, start_time, end_time)
     dfa = load_data(input_directory, 'activity.pkl')
-    dfa = subset_by_date(dfa, start_time, end_time)
+    dfa = utilities.subset_by_date(dfa, start_time, end_time)
 
     print('--> calculating returning users')
     x = []
     y = []
 
-    # set the start date as the earliest available date plus the 
+    # set the start date as the earliest available date plus the
     # active date range
     t = dfa.date.min() + timedelta(days=active_range)
 #    n = []
@@ -254,51 +253,74 @@ def returning(input_directory='.',
 
     # create plot object
     return plot.PlotObject(x,
-                            y,
-                            label=label,
-                            color=color,
-                            linestyle=linestyle)
+                           y,
+                           label=label,
+                           color=color,
+                           linestyle=linestyle)
 
 
-#def users_by_type(working_dir, st, et, utypes='University Faculty', agg='1D'):
-#
-#    # load the data based on working directory
-#    df = load_data(working_dir, 'users.pkl')
-#    df = subset_by_date(df, st, et)
-#
-#    # define HS user types
-#    usertypes = ['Unspecified', 'Post-Doctoral Fellow',
-#                 'Commercial/Professional', 'University Faculty',
-#                 'Government Official', 'University Graduate Student',
-#                 'Professional', 'University Professional or Research Staff',
-#                 'Local Government', 'University Undergraduate Student',
-#                 'School Student Kindergarten to 12th Grade',
-#                 'School Teacher Kindergarten to 12th Grade', 'Other']
-#
-#    # clean the data
-#    df.loc[~df.usr_type.isin(usertypes), 'usr_type'] = 'Other'
-#
-#    # loop through each of the user types
-#    plots = []
-#    colors = iter(cm.jet(numpy.linspace(0, 1, len(utypes))))
-#    for utype in utypes:
-#
-#        # group by user type
-#        du = df.loc[df.usr_type == utype]
-#
-#        # remove null values
-#        du = du.dropna()
-#
-#        # group by date frequency
-#        ds = du.groupby(pandas.Grouper(freq=agg)).count().usr_type.cumsum()
-#        x = ds.index.values
-#        y = ds.values
-#        c = next(colors)
-#
-#        # create plot object
-#        plots.append(plot.PlotObject(x, y, label=utype, color=c, linestyle='-'))
-#
-#    return plots
+def usertype(input_directory='.',
+             start_time=datetime(2000, 1, 1),
+             end_time=datetime(2030, 1, 1),
+             aggregation='1D',
+             linestyle='-',
+             usertypes=[],
+             **kwargs):
+
+    # load the data based on working directory
+    df = load_data(input_directory, 'users.pkl')
+    df = utilities.subset_by_date(df, start_time, end_time)
+
+    # define HS user types
+    ut_vocab = ['Unspecified',
+                'Post-Doctoral Fellow',
+                'Commercial/Professional',
+                'University Faculty',
+                'Government Official',
+                'University Graduate Student',
+                'Professional',
+                'University Professional or Research Staff',
+                'Local Government',
+                'University Undergraduate Student',
+                'School Student Kindergarten to 12th Grade',
+                'School Teacher Kindergarten to 12th Grade',
+                'Other']
+
+    # clean the data
+    df.loc[~df.usr_type.isin(ut_vocab), 'usr_type'] = 'Other'
+
+    # loop through each of the user types
+    plots = []
+
+    # plot only the provided user types
+    if len(usertypes) == 0:
+        # select all unique user types
+        usertypes = df.usr_type.unique()
+
+    colors = iter(cm.jet(numpy.linspace(0, 1, len(usertypes))))
+    for utype in usertypes:
+
+        # group by user type
+        du = df.loc[df.usr_type == utype]
+
+        # remove null values
+        du = du.dropna()
+
+        # group by date frequency
+        ds = du.groupby(pandas.Grouper(freq=aggregation)).count().usr_type.cumsum()
+        x = ds.index
+        y = ds.values
+        c = next(colors)
+
+        # create plot object
+        plots.append(plot.PlotObject(x, y, label=utype, color=c, linestyle='-'))
+
+    return plots
+
+def usertypes_cumulative():
+    pass
+
+
 #
 #
 #if __name__ == "__main__":
