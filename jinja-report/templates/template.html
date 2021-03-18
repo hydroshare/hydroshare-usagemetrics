@@ -25,18 +25,23 @@
 	</div>
 
 	{% for i in range(dat|count) %}
-	    <div class=figure>
-		<h2> Figure {{ i + 1 }}: {{ dat[i]['title'] }} </h2>
-		{% if dat[i]['img_data'] is not none %}
-	    	    <a href="{{ dat[i]['img_data'] }}" download> Download Data </a>
-		{% endif %}
-        	<img src={{ dat[i]['img_path'] }}>
-        	<p>
-		    <b> Figure {{ i + 1 }}:</b>
-        		{{ dat[i]['caption'] }}
-        	</p>
-        	<hr/>
+	    <div class=title-block>
+		<div class=figure-title>
+           	    <h2> Figure {{ i + 1 }}: {{ dat[i]['title'] }} </h2>
+		</div>
 	    </div>
+	    <div class=caption>
+		    {{ dat[i]['caption'] }} 
+
+		{% if dat[i]['img_data'] is not none %}
+	    	    [<a href="{{ dat[i]['img_data'] }}" download> Figure data </a>]
+		{% endif %}
+            </div>
+	    <div class=figure>
+	 	<img src={{ dat[i]['img_path'] }}>
+	    </div>
+
+	    <hr/>
 	{% endfor %}
 
     </body>

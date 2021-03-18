@@ -171,13 +171,16 @@ if __name__ == '__main__':
         # if indicated in the yaml configuration
         if metric_data.save_data:
             dat_path = os.path.join(outdir, f'{metric_name}.csv')
-           
-            # save all series dataframes to the plot_data dict
-            # and pass this dict to the utility function
-            plot_data[dat_path] = [p.df for p in plots]
 
-            # save plot data
-            utilities.save_data_to_csv(plot_data)
+            # only save the data if the plots were created, i.e. the
+            # re-build flag was not passed 
+            if not args.re_build:
+                # save all series dataframes to the plot_data dict
+                # and pass this dict to the utility function
+                plot_data[dat_path] = [p.df for p in plots]
+
+                # save plot data
+                utilities.save_data_to_csv(plot_data)
 
             # save path to data file in the template dict so it will be
             # rendered in the report doc.

@@ -28,6 +28,21 @@ report:
       background-color: #d3d3d359;
       padding: 1 50;
     }
+    .caption {
+      font-size: 14pt;
+      padding: 0 50;
+    }
+    .title-block {
+      padding: 10 50;
+    }
+    .figure-title {
+      display: inline-block;
+    }
+    .figure-data {
+      display: inline-block;
+      padding: 0 50;
+      vertical-align: middle;
+    }
 metrics:
   users-active-30-day:
     metric_type: user
@@ -58,8 +73,8 @@ metrics:
         #        font.size: 40.0
         axes.titlesize: 24
         axes.labelsize: 16
-        legend.fontsize: 16
-        figure.figsize: 10, 6
+        legend.fontsize: 12
+        figure.figsize: 12, 7
       axis:
         xlabel: Date
         ylabel: Number of Users
@@ -97,8 +112,8 @@ metrics:
       rcParams:
         axes.titlesize: 24
         axes.labelsize: 16
-        legend.fontsize: 16
-        figure.figsize: 10, 6
+        legend.fontsize: 12
+        figure.figsize: 12, 7
       axis:
         xlabel: Date
         ylabel: Number of Users
@@ -136,8 +151,8 @@ metrics:
       rcParams:
         axes.titlesize: 24
         axes.labelsize: 16
-        legend.fontsize: 16
-        figure.figsize: 10, 6
+        legend.fontsize: 12
+        figure.figsize: 12, 7
       axis:
         xlabel: Date
         ylabel: Number of Users
@@ -166,8 +181,8 @@ metrics:
       rcParams:
         axes.titlesize: 24
         axes.labelsize: 16
-        legend.fontsize: 16
-        figure.figsize: 10, 6
+        legend.fontsize: 12
+        figure.figsize: 12, 7
       axis:
         xlabel: Date
         ylabel: Number of Users
@@ -196,8 +211,8 @@ metrics:
       rcParams:
         axes.titlesize: 24
         axes.labelsize: 16
-        legend.fontsize: 16
-        figure.figsize: 10, 6
+        legend.fontsize: 12
+        figure.figsize: 12, 7
       axis:
         xlabel: Account Creation Date
         ylabel: Number of Organizations
@@ -234,8 +249,8 @@ metrics:
       rcParams:
         axes.titlesize: 24
         axes.labelsize: 16
-        legend.fontsize: 16
-        figure.figsize: 10, 6
+        legend.fontsize: 12
+        figure.figsize: 12, 7
       axis:
         xlabel: Account Creation Date
         ylabel: Number of Organizations
@@ -262,8 +277,8 @@ metrics:
       rcParams:
         axes.titlesize: 24
         axes.labelsize: 16
-        legend.fontsize: 16
-        figure.figsize: 10, 6
+        legend.fontsize: 12
+        figure.figsize: 12, 7
       axis:
         xlabel: Date
         ylabel: Number of Published Resources
@@ -287,40 +302,39 @@ metrics:
         The total number citations of HydroShare resources that have been issued digital object identifiers (DOIs). The accompanying dataset also contains the dois for publications that cites each of these HydroShare resources.
       rcParams:
         axes.titlesize: 24
-        axes.labelsize: 14
-        figure.figsize: 10, 6
+        axes.labelsize: 16
+        figure.figsize: 12, 7
       axis:
         xlabel: Date
         ylabel: Number of Citations
         ylim: (0.0, None)
       figure:
         annotate: False
-sers-types:
- metric_type: user
- start_time: 01-01-2015
- end_time: 03-01-2021
- save_data: True
- series:
-   - type: usertype
-     label: User Types
-     linestyle: '-'
-     #        user_types: ['University Graduate Student', 'University Professional or Research Staff', 'University Faculty']
- figure_configuration:
-   type: line
-   title: Number of HydroShare User Accounts
-   caption: |
-     (1) Total cumulative HydroShare accounts through time based on the date each account was created, (2) active accounts are defined as those that have logged into HydroShare within the last 30 days, and (3) new accounts defined as those that were created within the active range (i.e. the number of active users that created an account within the last 30 days).
-   rcParams:
-     #        font.size: 40.0
-     axes.titlesize: 24
-     axes.labelsize: 16
-     legend.fontsize: 16
-     figure.figsize: 10, 6
-   axis:
-     xlabel: Date
-     ylabel: Number of Users
-     ylim: (0.0, None)
-   figure:
-     annotate: True
-     grid: True
-     legend: True
+  users-types:
+    metric_type: user
+    start_time: 01-01-2015
+    end_time: 03-01-2021
+    save_data: True
+    series:
+      - type: usertype
+        label: User Types
+        linestyle: '-'
+        #        user_types: ['University Graduate Student', 'University Professional or Research Staff', 'University Faculty']
+    figure_configuration:
+      type: line
+      title: Cumulative Number of HydroShare User Accounts by User Type
+      caption: |
+        The cumulative number of HydroShare users separated by their user type. HydroShare provides a list of acceptable user types (e.g. "University Graduate Student", "Government Official", etc.) for users to choose from. HydroShare users have the option of providing a custom type which are collectively displayed as "Other" in the figure. Initially, HydroShare users were not required to specify a "user type" when creating an account. As a result, we have a large number of HydroShare users with an "Unspecified" type. 
+      rcParams:
+        axes.titlesize: 24
+        axes.labelsize: 16
+        legend.fontsize: 12
+        figure.figsize: 12, 7
+      axis:
+        xlabel: Date Account was Created
+        ylabel: User Count
+        ylim: (0.0, None)
+      figure:
+        annotate: True
+        grid: True
+        legend: True
