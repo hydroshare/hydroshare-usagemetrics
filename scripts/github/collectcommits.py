@@ -8,7 +8,6 @@ import commit
 
 def get_branches(url):
 
-    AUTH = (creds.username, creds.password)
     branches = {}
 
     page = 1
@@ -16,7 +15,8 @@ def get_branches(url):
     while 1:
         print('.', flush=True, end='')
 
-        r = requests.get('%s/branches?page=%d' % (url, page), auth=AUTH)
+        r = requests.get('%s/branches?page=%d' % (url, page),
+                         headers={'Authorization': 'token %s' % creds.token})
         branch_json = r.json()
 
         # exit if no data is found
@@ -36,7 +36,6 @@ def get_data(url, outpath, in_branches=[]):
     dat = []
     idx = []
 
-    AUTH = (creds.username, creds.password)
 
     # collect branches
     branches = get_branches(url)
@@ -51,7 +50,8 @@ def get_data(url, outpath, in_branches=[]):
         branch_sha = v
 
         # get info from the current branch.
-        r = requests.get('%s/branches/%s' % (url, branch_name), auth=AUTH)
+        r = requests.get('%s/branches/%s' % (url, branch_name),
+                         headers={'Authorization': 'token %s' % creds.token})
 
         # get the last commit sha from the master branch
         jdat = r.json()
@@ -65,9 +65,11 @@ def get_data(url, outpath, in_branches=[]):
             # get the first batch of commits
             r = requests.get('%s/commits?per_page=100&sha=%s' %
                              (url, sha),
-                             auth=AUTH)
+                             headers={'Authorization': 'token %s' % creds.token})
+                             
             jdat = r.json()
             for d in jdat:
+                import pdb; pdb.set_trace()
                 dat.append(commit.Commit(d, branch_name))
 
             # get the new_sha

@@ -7,8 +7,7 @@ class Commit(object):
         self.date = dt.strptime(dict['commit']['author']['date'],
                                 '%Y-%m-%dT%H:%M:%SZ')
         self.author = dict['commit']['author']['name']
-        self.message = dict['commit']['message'].replace(',',' ')
-                                                .replace('#','')
+        self.message = dict['commit']['message'].replace(',',' ').replace('#','')
         self.branch = branch
 
     def __issue_to_dict(self, i=None):
