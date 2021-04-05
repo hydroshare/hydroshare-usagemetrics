@@ -25,8 +25,6 @@ def get_stats_data(users=True, resources=True,
     afile = os.path.join(dirname, 'activity.pkl')
     acsv = os.path.join(dirname, 'activity.csv')
 
-#    cfile = os.path.join(dirname, 'combined-stats.pkl')
-
     report_dt_str = datetime.today().strftime('%m/%d/%Y')
 
     uindex = '*user*latest*'
@@ -70,7 +68,8 @@ def get_stats_data(users=True, resources=True,
                           port=port,
                           index=rindex,
                           outpik=rfile,
-                          outfile=rcsv)
+                          outfile=rcsv,
+                          rename_cols={'id': 'resource_id'})
             for k, v in kwargs.items():
                 print(f'--> {k}: {v}')
 
@@ -91,31 +90,15 @@ def get_stats_data(users=True, resources=True,
     else:
         afile = ''
 
-#    # build and export a combined file
-#    print('--> combining data')
-#    u = pandas.read_pickle(ufile)
-#    r = pandas.read_pickle(rfile)
-#    j = None
-#    if users and resources:
-#        j = pandas.merge(u, r, on='usr_id')
-##        j = r.join(u, on='usr_id', how='left', lsuffix='_[r]', rsuffix='_[u]')
-#
-#        print('--> saving binary file to: %s' % cfile)
-#        j.to_pickle(cfile)
-#    else:
-#        cfile = ''
-
     print('--> output files produced')
     print(' -> %s' % ufile)
     print(' -> %s' % rfile)
     print(' -> %s' % afile)
-#    print(' -> %s' % cfile)
     print('\n')
 
     return dict(users=ufile,
                 resources=rfile,
                 activity=afile)
-#                combined=cfile)
 
 
 if __name__ == '__main__':

@@ -16,10 +16,10 @@
 
 report:
   collect_data: True
-  input_directory: 03.02.2020
-  output_directory: 03.02.2020/report
+  input_directory: 03.31.2021
+  output_directory: 03.31.2021/report
   creator: Tony Castronova
-  date_created: 03/09/2021
+  date_created: 03/31/2021
   title: HydroShare Usage Report
   description: |
     This document contains figures and statistics about HydroShare users, their activity, and their distribution among domains in the community. The figures contained in in this document are intended to be used to understand the general adoption and use of the HydroShare platform. All data used to generate these figures are available in the public HydroShare metrics ElasticSearch database which can be found at: http://usagemetrics.hydroshare.org.
@@ -44,6 +44,7 @@ report:
       vertical-align: middle;
     }
 metrics:
+
   users-active-30-day:
     metric_type: user
     start_time: 01-01-2015
@@ -161,36 +162,51 @@ metrics:
         annotate: True
         grid: True
         legend: True
-
-  resource-total-size:
-    metric_type: resource
+  
+  users-pie-specified:
+    metric_type: userpie
     start_time: 01-01-2015
     end_time: 03-01-2021
-    aggregation: 1M
     save_data: True
     series:
-      - type: total
-        label: Total Cumulative Resources
-        color: b
-        linestyle: '-'
+      - type: all
+        exclude:
+          - Other
+          - Unspecified
     figure_configuration:
-      type: line
-      title: Cumulative Resource Size (Aggregated Monthly)
+      type: pie
+      title: User Pie
       caption: |
-        The cumulative storage of all HydroShare resources plotted by the date in which the resource was created. These data are aggregated monthly and then summed cumulatively.
+        The distribution of HydroShare users based on how they have defined "user type" type in their profile. Organization types come are defined by a controlled list, users that have not completed this attribute of their profile are not shown.
       rcParams:
         axes.titlesize: 24
         axes.labelsize: 16
         legend.fontsize: 12
         figure.figsize: 12, 7
       axis:
-        xlabel: Date
-        ylabel: Number of Users
-        ylim: (0.0, None)
-      figure:
-        annotate: True
-        grid: True
-        legend: True
+        xlabel: ""
+        ylabel: ""
+  
+  users-pie-all:
+    metric_type: userpie
+    start_time: 01-01-2015
+    end_time: 03-01-2021
+    save_data: True
+    series:
+      - type: all
+    figure_configuration:
+      type: pie
+      title: User Pie
+      caption: |
+        The distribution of user types for all known HydroShare users. Note "Unspecified" is currently not an option for HydroShare users but largely represents users that have not completed their profile (typically we classify these as inactive users).
+      rcParams:
+        axes.titlesize: 24
+        axes.labelsize: 16
+        legend.fontsize: 12
+        figure.figsize: 12, 7
+      axis:
+        xlabel: ""
+        ylabel: ""
 
   organizations-total-line:
     metric_type: organization
@@ -255,6 +271,78 @@ metrics:
         xlabel: Account Creation Date
         ylabel: Number of Organizations
         ylim: (0.0, 300)
+      figure:
+        annotate: True
+        grid: True
+        legend: True
+
+  resource-total-size:
+    metric_type: resource
+    start_time: 01-01-2015
+    end_time: 03-01-2021
+    aggregation: 1M
+    save_data: True
+    series:
+      - type: total
+        label: Cumulative Resource Size
+        color: b
+        linestyle: '-'
+    figure_configuration:
+      type: line
+      title: Cumulative Resource Size (Aggregated Monthly)
+      caption: |
+        The cumulative storage of all HydroShare resources plotted by the date in which the resource was created. These data are aggregated monthly and then summed cumulatively.
+      rcParams:
+        axes.titlesize: 24
+        axes.labelsize: 16
+        legend.fontsize: 12
+        figure.figsize: 12, 7
+      axis:
+        xlabel: Date
+        ylabel: Disk Storage in GB
+        ylim: (0.0, None)
+      figure:
+        annotate: True
+        grid: True
+        legend: True
+
+  resource-count-by-type:
+    metric_type: resource
+    start_time: 01-01-2015
+    end_time: 03-01-2021
+    aggregation: 1M
+    save_data: True
+    series:
+      - type: count_public
+        label: Cumulative Number of Public Resources
+        color: blue
+        linestyle: '-'
+      - type: count_published
+        label: Cumulative Number of Published Resources
+        color: green
+        linestyle: '-'
+      - type: count_discoverable
+        label: Cumulative Number of Discoverable Resources
+        color: orange
+        linestyle: '-'
+      - type: count_private
+        label: Cumulative Number of Private Resources
+        color: red
+        linestyle: '-'
+    figure_configuration:
+      type: line
+      title: Cumulative Resource Count by Status (Aggregated Monthly)
+      caption: |
+        The cumulative storage of all HydroShare resources plotted by the date in which the resource was created. Resources are separated by their status, aggregated monthly, and summed cumulatively.
+      rcParams:
+        axes.titlesize: 24
+        axes.labelsize: 16
+        legend.fontsize: 12
+        figure.figsize: 12, 7
+      axis:
+        xlabel: Date
+        ylabel: Resource Count
+        ylim: (0.0, None)
       figure:
         annotate: True
         grid: True

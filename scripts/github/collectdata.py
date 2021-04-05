@@ -10,10 +10,12 @@ def get_data(url, outpath):
     dat = []
     idx = []
 
-    AUTH = (creds.username, creds.password)
+#    AUTH = (creds.username, creds.password)
+
+    headers = {'Authorization': 'token %s' % creds.token}
 
     r = requests.get('%s?state=all&per_page=50&page=%d' % (url, 1),
-                     auth=AUTH)
+                     headers=headers)
     jdat = r.json()
     for d in jdat:
         dat.append(issue.Issue(d))
@@ -27,7 +29,7 @@ def get_data(url, outpath):
         print('--> collecting data.', end='', flush=True)
         while 'last' in pages and 'next' in pages:
             pg = pages['next'].split('=')[-1]
-            r = requests.get(pages['next'], auth=AUTH)
+            r = requests.get(pages['next'], headers=headers)
             jdat = r.json()
 
             # save the issue

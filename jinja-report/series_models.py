@@ -81,6 +81,17 @@ class user(Base):
 
 
 @dataclass
+class userpie(Base):
+    series: Series
+    figure: Figure = field(default_factory=Figure)
+    input_directory: str = '.'
+    start_time: str = '01-01-2000'
+    end_time: str = '01-01-2025'
+    save_data: bool = False
+    exclude: List[str] = field(default_factory=list)
+
+
+@dataclass
 class resource(Base):
     series: List[Series]
     figure: Figure = field(default_factory=Figure)

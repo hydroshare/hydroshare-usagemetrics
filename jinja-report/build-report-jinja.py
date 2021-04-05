@@ -4,16 +4,17 @@
 import os
 import sys
 import yaml
-import shutil
+#import shutil
 import jinja2
 import argparse
-from datetime import datetime
+#from datetime import datetime
 import series_models as models
 from subprocess import Popen, PIPE
 
 import doi
 import plot
 import users
+import users_pie as userpie
 import resources
 import utilities
 import organizations
@@ -23,6 +24,7 @@ class modules():
     module_map = {'user': users,
                   'resource': resources,
                   'organization': organizations,
+                  'userpie': userpie,
                   'doi': doi}
 
     def lookup(self, type):
@@ -64,7 +66,8 @@ def run(command):
 
     p = Popen(cmd, stderr=PIPE)
     while True:
-        out = p.stderr.read(1).decode('utf-8')
+
+        out = p.stderr.read(1).decode('utf-8', errors='ignore')
         if out == '' and p.poll() is not None:
             break
         if out != '':

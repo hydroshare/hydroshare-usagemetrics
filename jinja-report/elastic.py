@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 
-import sys
 import os
-import argparse
-from elasticsearch import Elasticsearch
-from pandas.io.json import json_normalize
+import sys
 import time
 import pandas
+import argparse
+from tqdm import tqdm
+from elasticsearch import Elasticsearch
+from pandas.io.json import json_normalize
+
 
 # standard elasticsearch fields to trim from the dataframe
 DEFAULT_TRIM = ['@version', 'beat.hostname', 'beat.name', 'count', 'fields',
@@ -17,7 +19,7 @@ DEFAULT_TRIM = ['@version', 'beat.hostname', 'beat.name', 'count', 'fields',
 
 def convert_binary_string(value):
     """
-    This function removes the string encapsulated bytestrings that 
+    This function removes the string encapsulated bytestrings that
     HydroShare sends to ElasticSearch.
 
     usage: df.applymap(convert_binary_string)
@@ -42,10 +44,18 @@ def print_progress(iteration, total, prefix='', suffix='',
         print('%s |%s| %s%% %s' % (prefix, fill*length, '100', suffix), end='\n')
 
 
-def get_es_data(host, port='8080', index='*', query='*', outfile=None,
-                outpik='usage.pkl', prefix=['_source.'], drop_standard=True,
-                drop=[], deidentfy=False):
-
+def get_es_data(host,
+                port='8080',
+                index='*',
+                query='*',
+                outfile=None,
+                outpik='usage.pkl',
+                prefix={'_source.': '', '_': ''},
+                drop_standard=True,
+                drop=[],
+                deidentify=False,
+                rename_cols={}):
+    
     # connect to the hydroshare elasticsearch server
     es = Elasticsearch([{'host': host, 'port': port}])
 
@@ -57,7 +67,6 @@ def get_es_data(host, port='8080', index='*', query='*', outfile=None,
         sys.exit(1)
 
     # get the total size of dataset
-    doc_size = 0
     total_size = temp_r['hits']['total']
 
     # calculate the scroll size
@@ -69,14 +78,20 @@ def get_es_data(host, port='8080', index='*', query='*', outfile=None,
 
     # execute the first elasticsearch query and increment the doc_size
     response = es.search(index=index, q=query, scroll='10m', size=scroll_size)
-    doc_size += len(response['hits']['hits'])
 
     # save the results in a pandas dataframe
     df = json_normalize(response['hits']['hits'])
     df = df.applymap(convert_binary_string)
 
+    # initialize the progress bar, using ascii so it doesn't break
+    # when called from a subprocess.
+    pbar = tqdm(ascii=True, total=total_size)
     while 1:
         try:
+            # update progress. this is at the beginning because the first
+            # call is made before the loop begins
+            pbar.update(scroll_size)
+
             # make the next request using the previous _scroll_id
             sid = response['_scroll_id']
             response = es.scroll(scroll_id=sid, scroll='10m')
@@ -84,6 +99,7 @@ def get_es_data(host, port='8080', index='*', query='*', outfile=None,
             # get the scroll_size of the previous query and exit
             # if it is zero
             scroll_size = len(response['hits']['hits'])
+
             if scroll_size > 0:
                 # save the results in a pandas dataframe and append
                 # to previous results
@@ -93,36 +109,23 @@ def get_es_data(host, port='8080', index='*', query='*', outfile=None,
             else:
                 break
 
-            # calculate the total size that has been downloaded so far
-            doc_size += len(response['hits']['hits'])
-            doc_size = total_size if doc_size > total_size else doc_size
-
-            # print progress
-            print_progress(doc_size, total_size,
-                           prefix='downloading', length=50,
-                           suffix='[ %d of %d ]    ' % (doc_size, total_size))
-
-            # exit if the total downloaded size is equal to the
-            # total known size of the data
-            if doc_size == total_size:
-                break
-
-        except Exception:
+        except Exception as e:
             print('\nFailed to normalize elasticsearch response.')
+            print(e)
             sys.exit(1)
+
+    # close the progress bar
+    pbar.close()
 
     # clean and trim the pandas table
     for col in df.columns.values:
-        for pre in prefix:
-            if col[0:len(pre)] == pre:
-                print('--> renaming column %s to %s' % (col, col[len(pre):]))
+        for pre in prefix.keys():
+            if pre in col:
+                new_name = col.replace(pre, prefix[pre])
+                print(f'--> renaming column {col} -> {new_name}')
+                df.rename(columns={col: new_name}, inplace=True)
                 time.sleep(.05)
-                df.rename(columns={col: col[len(pre):]}, inplace=True)
                 break
-        else:
-            print('--> dropping column: %s' % col)
-            time.sleep(.05)
-            df.drop(col, axis=1, inplace=True)
 
     # drop any specified columns
     if drop_standard:
@@ -135,6 +138,15 @@ def get_es_data(host, port='8080', index='*', query='*', outfile=None,
             df.drop(dropcol, axis=1, inplace=True)
         else:
             print('--> [skip] drop column.  Could not find %s' % dropcol)
+
+    # rename columns any other columns that were specified in input args
+    col_names = df.columns.values
+    for old_name, new_name in rename_cols.items():
+        if old_name in col_names:
+            print(f'--> renaming column {old_name} -> {new_name}')
+            df.rename(columns={old_name: new_name}, inplace=True)
+        else:
+            print(f'--> could not find column {old_name}, skipping rename operation')
 
     # write the dataframe to file if requested
     if outfile is not None:

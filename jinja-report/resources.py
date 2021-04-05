@@ -90,6 +90,71 @@ def total(input_directory='.',
     return plot_obj
 
 
+def count(input_directory='.',
+          start_time=datetime(2000, 1, 1),
+          end_time=datetime(2030, 1, 1),
+          aggregation='1D',
+          label='total number of resources',
+          color='b',
+          linestyle='-',
+          **kwargs):
+
+
+    if 'status' not in kwargs.keys():
+        raise Exception('Missing Status Argument. Can not create figure')
+
+    terms = ['private', 'public', 'published', 'discoverable']
+    if kwargs['status'] not in terms:
+        raise Exception(f'{kwargs["status"]} not an known term. Please choose from one of the following: {terms}')
+
+    print('--> calculating total public resources')
+
+    # load the data based on working directory
+    print('    .. loading dataset')
+    df = load_data(input_directory)
+    df = subset_by_date(df, start_time, end_time)
+
+    print('    .. filling missing values')
+    df.fillna(0)
+
+    print('    .. sorting data')
+    df = df.sort_index()
+
+    # filter only public
+    print(f'    .. isolating resource status is {kwargs["status"]}')
+    df = df[df.res_pub_status == kwargs['status']]
+
+    print('    .. determining cumulative sum')
+    df = df.groupby(pandas.Grouper(freq=aggregation)).count().cumsum()['res_size']
+
+    plot_obj = plot.PlotObject(x=df.index,
+                               y=df.values,
+                               label=label,
+                               color=color,
+                               linestyle=linestyle)
+    return plot_obj
+
+
+def count_public(**kwargs):
+    kwargs['status'] = 'public'
+    return count(**kwargs)
+
+
+def count_published(**kwargs):
+    kwargs['status'] = 'published'
+    return count(**kwargs)
+
+
+def count_private(**kwargs):
+    kwargs['status'] = 'private'
+    return count(**kwargs)
+
+
+def count_discoverable(**kwargs):
+    kwargs['status'] = 'discoverable'
+    return count(**kwargs)
+
+
 #def total_resources_by_type(working_dir, st, et, agg='1D'):
 #
 #    print('--> calculating total resource size by type')

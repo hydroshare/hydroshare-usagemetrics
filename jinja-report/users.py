@@ -11,6 +11,7 @@ import matplotlib.dates as mdates
 from matplotlib.pyplot import cm
 from pandas.plotting import register_matplotlib_converters
 
+import spam
 import plot
 import utilities
 
@@ -21,6 +22,20 @@ def load_data(workingdir, pickle_file='users.pkl'):
     # load the activity data
     path = os.path.join(workingdir, pickle_file)
     df = pandas.read_pickle(path)
+
+    types = {'users.pkl': {'from': 'usr_id',
+                           'to': 'users'},
+             'resources.pkl': {'from': 'resource_id',
+                               'to': 'resources'},
+             'activity.pkl': {'from': 'user_id',
+                              'to': 'users'}}
+
+    # filter spam users
+    typ = os.path.basename(pickle_file)
+    df = spam.filter_dataframe(df,
+                               workingdir,
+                               types[typ]['from'],
+                               types[typ]['to'])
 
     columns = df.columns
 
@@ -36,6 +51,7 @@ def load_data(workingdir, pickle_file='users.pkl'):
                                        .dt.normalize()
         df.report_date = pandas.to_datetime(df.report_date) \
                                .dt.normalize()
+
 
 #        # fill NA values.  This happens when a user never logs in
 #        df.usr_last_login_date = df.usr_last_login_date.fillna(0, downcast=False)

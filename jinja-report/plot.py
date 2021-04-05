@@ -168,3 +168,40 @@ def bar(plotObjs_ax1,
     # save the figure and the data
     plt.savefig(filename)
     print(f'--> figure saved to: {filename}')
+
+
+def pie(plotObjs_ax1,
+        filename,
+        axis_dict={},
+        figure_dict={},
+        rcParams={},
+        **kwargs):
+
+    print('--> making figure...')
+
+    # set global plot attributes
+    if rcParams != {}:
+        plt.rcParams.update(rcParams)
+
+    # create figure of these data
+    fig, ax = plt.subplots()
+
+    for pobj in plotObjs_ax1:
+        pobj.df[pobj.label].plot.pie(ax=ax,
+                                     labeldistance=1.1)
+
+    plt.tight_layout()
+
+    # set plot attributes
+    for k, v in axis_dict.items():
+        # eval if string is a tuple
+        if '(' in v:
+            v = eval(v)
+        getattr(ax, 'set_'+k)(v)
+
+    for k, v in figure_dict.items():
+        getattr(plt, k)(v)
+
+    # save the figure and the data
+    plt.savefig(filename)
+    print(f'--> figure saved to: {filename}')

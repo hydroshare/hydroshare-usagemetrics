@@ -37,8 +37,9 @@ def gather_spam_user_ids(
         if os.path.exists(spam_res) and os.path.exists(spam_usr):
             print('.... loading cache')
             spam_data = {}
-            spam_data['resources'] = list(pd.read_csv(spam_res).resource_id.values)
-            spam_data['users'] = list(pd.read_csv(spam_usr).user_id.values)
+
+            spam_data['resources'] = list(pd.read_csv(spam_res, dtype={'resource_id': str}).resource_id.values)
+            spam_data['users'] = list(pd.read_csv(spam_usr, dtype={'user_id': str}).user_id.values)
 
             print('.... completed successfully')
             return spam_data
@@ -52,6 +53,10 @@ def gather_spam_user_ids(
             (f"Error collecting data from {url}.\n", "Reason: {res.reason}")
         )
     spam_data = json.loads(res.text)
+
+    # convert values to strings to avoid type errors during filtering later
+    spam_data['resources'] = list(map(str, spam_data['resources']))
+    spam_data['users'] = list(map(str, spam_data['users']))
 
     if cache:
         print('.... saving cache')
@@ -87,7 +92,7 @@ def filter_dataframe(df: pd.DataFrame,
     # check that input_col exists in the dataframe
     if input_col not in df.columns:
         msg = (f'Column ({input_col}) does not exist in the input dataframe\n',
-               'Available columns: {",".join(df.columns())}')
+               f'Available columns: {",".join(df.columns)}')
         raise Exception(msg)
 
     # load spam data
@@ -96,20 +101,32 @@ def filter_dataframe(df: pd.DataFrame,
     # check that spam_col exists in the spam data
     if spam_col not in spam_data.keys():
         msg = (f'Column ({spam_col}) does not exist in spam dataset.\n',
-               'Available spam columns: {",".join(spam_data.keys())}')
+               f'Available spam columns: {",".join(spam_data.keys())}')
         raise Exception(msg)
 
     # filter data based on the input and spam columns.
-    dat = df[~df[input_col].astype(int).isin(spam_data[spam_col])]
+    dat = df[~df[input_col].isin(spam_data[spam_col])]
 
     return dat
 
 
 if __name__ == '__main__':
-    df = pd.read_pickle('03.02.2020/data/users.pkl')
+    working_dir = '03.26.2021'
+#    df = pd.read_pickle(os.path.join(working_dir, 'users.pkl'))
+#    df_filtered = filter_dataframe(df,
+#                                   working_dir,
+#                                   'usr_id',
+#                                   'users')
+#    df = pd.read_pickle(os.path.join(working_dir, 'activity.pkl'))
+#    df_filtered = filter_dataframe(df,
+#                                   working_dir,
+#                                   'user_id',
+#                                   'users')
+    df = pd.read_pickle(os.path.join(working_dir, 'resources.pkl'))
     df_filtered = filter_dataframe(df,
-                                   '03.02.2020/data',
+                                   working_dir,
                                    'usr_id',
                                    'users')
+
     print(f'input df: {len(df)} records')
     print(f'output df: {len(df_filtered)} records')
