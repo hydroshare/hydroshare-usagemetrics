@@ -46,26 +46,30 @@ def gather_spam_user_ids(
 
     # collect spam user ids
     print('.... gathering data from spam.cuahsi.io')
-    url = "https://spam.cuahsi.io/api/v1/summary"
+#    url = "https://spam.cuahsi.io/api/v1/summary"
+    url = "https://obdv25s585.execute-api.us-east-2.amazonaws.com/users"
     res = requests.get(url)
     if res.status_code != 200:
         raise Exception(
             (f"Error collecting data from {url}.\n", "Reason: {res.reason}")
         )
-    spam_data = json.loads(res.text)
+    dat = json.loads(res.text)
 
     # convert values to strings to avoid type errors during filtering later
-    spam_data['resources'] = list(map(str, spam_data['resources']))
-    spam_data['users'] = list(map(str, spam_data['users']))
+#    spam_data['resources'] = list(map(str, spam_data['resources']))
+    spam_data = {}
+    spam_data['users'] = list(map(str, dat))
+    spam_data['resources'] = []
 
     if cache:
         print('.... saving cache')
-        # save spam resources
-        df = pd.DataFrame(spam_data["resources"], columns=["resource_id"])
-        df.to_csv(os.path.join(working_dir, "spam-resources.csv"))
+#        # save spam resources
+#        df = pd.DataFrame(spam_data["resources"], columns=["resource_id"])
+#        df.to_csv(os.path.join(working_dir, "spam-resources.csv"))
 
         # save spam users
-        df = pd.DataFrame(spam_data["users"], columns=["user_id"])
+        #df = pd.DataFrame(spam_data["users"], columns=["user_id"])
+        df = pd.DataFrame(spam_data, columns=["user_id"])
         df.to_csv(os.path.join(working_dir, "spam-users.csv"))
 
     print('.... completed successfully')
